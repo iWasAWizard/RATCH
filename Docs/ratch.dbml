@@ -1,0 +1,107 @@
+Project RATCH {
+  database_type: 'MariaDB'
+  Note: 'Requirements and Test Case Hub'
+}
+
+Table users as U {
+  id int [pk, increment, unique]
+  firstname varchar
+  lastname varchar
+  email varchar
+  username varchar
+  password hash
+  timezone enum
+  created timestamp [default: `now()`]
+  lastseen timestamp
+  globalrole int [ref: - globalroles.id]
+  projectroles int [ref: < projectroles.id]
+}
+
+Table projects as P {
+  id int [pk, increment, unique]
+  name varchar
+  description text
+  classification classification
+  created timestamp [default: `now()`]
+  updated timestamp
+  requirements int [ref: < R.id]
+  users int [ref: < U.id]
+  testcases int [ref: < T.id]
+ }
+
+Table requirements as R {
+  id int [pk, increment, unique]
+  releaseversion enum
+  type varchar [ref: - requirementtypes.name]
+  classification classification 
+  description text
+  lastmodified timestamp
+  lastmodifiedby int [ref: > U.id]
+}
+
+Table requirementtypes {
+  id int [pk, increment]
+  name varchar
+  description text
+}
+
+Table testcases as T {
+  id int [pk, increment]
+  name varchar
+  desciption text
+  prerequisites int [ref: < T.id]
+  teststeps int [ref: < teststeps.id]
+  lastmodified timestamp
+  lastmodifiedby int [ref: > U.id]
+}
+
+Table teststeps {
+  id int [pk, increment]
+  proceduretext text
+  verificationtext text
+  notes text
+  requirementssatisfied int [ref: < R.id]
+  testcase int [ref: > T.id]
+  stepnumber int
+}
+
+Table customfields {
+  id int [pk, increment]
+  name varchar
+  description text
+  customfieldtype customfieldtypes
+  options int [ref: < customfieldoptions.id, default: 'NULL']
+}
+
+Table customfieldoptions {
+  id int [pk, increment]
+  name varchar
+}
+
+Table globalroles {
+  id int [pk, unique]
+  name varchar
+  description text
+}
+
+Table projectroles {
+  id int [pk, unique]
+  project int [ref: - P.id]
+  name varchar
+  description text
+}
+
+Enum customfieldtypes {
+  varchar
+  text
+  timestamp
+  checkbox
+}
+
+Enum classification {
+  Unclassified
+  Sensitive
+  Secret
+  TS
+  TSSCI
+}
