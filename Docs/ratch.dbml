@@ -1,5 +1,5 @@
 Project RATCH {
-  database_type: 'MariaDB'
+  database_type: 'PostgreSQL'
   Note: 'Requirements and Test Case Hub'
 }
 
