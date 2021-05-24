@@ -90,7 +90,7 @@ CREATE TABLE IF NOT EXISTS UsersByProject (
   user_id INT UNIQUE NOT NULL references Users(user_id),
   project_id INT NOT NULL references Projects(project_id)
   PRIMARY KEY(user_id, project_id)
-)
+);
 
 CREATE TABLE IF NOT EXISTS RequirementsByProject (
   project_id INT NOT NULL references Projects(project_id),
