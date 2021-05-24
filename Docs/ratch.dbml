@@ -3,105 +3,162 @@ Project RATCH {
   Note: 'Requirements and Test Case Hub'
 }
 
-Table users as U {
-  id int [pk, increment, unique]
-  firstname varchar
-  lastname varchar
+Table Users as U {
+  user_id int [pk, increment, unique]
+  first_name varchar
+  last_name varchar
   email varchar
   username varchar
-  password hash
-  timezone enum
+  password varchar
   created timestamp [default: `now()`]
-  lastseen timestamp
-  globalrole int [ref: - globalroles.id]
-  projectroles int [ref: < projectroles.id]
+  lastseen timestamp [default: `now()`]
 }
 
-Table projects as P {
-  id int [pk, increment, unique]
-  name varchar
-  description text
+Table Projects as P {
+  project_id int [pk, increment, unique]
+  project_name varchar
+  project_description text
   classification classification
   created timestamp [default: `now()`]
-  updated timestamp
-  requirements int [ref: < R.id]
-  users int [ref: < U.id]
-  testcases int [ref: < T.id]
+  updated timestamp [default: `now()`]
  }
 
-Table requirements as R {
-  id int [pk, increment, unique]
-  releaseversion enum
-  type varchar [ref: - requirementtypes.name]
-  classification classification 
-  description text
-  lastmodified timestamp
-  lastmodifiedby int [ref: > U.id]
+Table Requirements as R {
+  requirement_id int [pk, increment, unique]
+  requirement_name varchar
+  release_version enum
+  requirement_description text
+  type int [ref: - requirementtypes.type_id]
+  classification classification
+  last_modified timestamp [default: `now()`]
+  last_modified_by int [ref: - U.user_id]
 }
 
-Table requirementtypes {
-  id int [pk, increment]
-  name varchar
-  description text
+Table RequirementTypes {
+  type_id int [pk, increment]
+  type_name varchar [unique]
+  type_description text
 }
 
-Table testcases as T {
-  id int [pk, increment]
-  name varchar
-  desciption text
-  prerequisites int [ref: < T.id]
-  teststeps int [ref: < teststeps.id]
-  lastmodified timestamp
-  lastmodifiedby int [ref: > U.id]
+Table TestCases as T {
+  case_id int [pk, increment]
+  case_name varchar
+  case_desciption text
+  prerequisites text
+  last_modified timestamp
+  last_modified_by int [ref: - U.user_id]
 }
 
-Table teststeps {
-  id int [pk, increment]
-  proceduretext text
-  verificationtext text
+Table TestSteps {
+  step_id int [pk, increment]
+  procedure_text text
+  verification_text text
   notes text
-  requirementssatisfied int [ref: < R.id]
-  testcase int [ref: > T.id]
-  stepnumber int
+  test_case int [ref: - T.case_id]
+  step_number int
 }
 
-Table customfields {
-  id int [pk, increment]
-  name varchar
+Table CustomFields {
+  custom_field_id int [pk, increment]
+  custom_field_name varchar
+  custom_field_description text
+  custom_field_type int [ref: - CustomFieldTypes.custom_field_type_id]
+}
+
+Table CustomFieldTypes {
+  custom_field_type_id int [pk, increment]
+  custom_field_type_name varchar [unique]
+}
+
+Table Permissions {
+  permission_id int
+  permission_name varchar
+  permission_description text
+}
+
+Table GlobalRoles {
+  global_role_id int [pk, unique]
+  global_role_name varchar
+  global_role_description text
+}
+
+Table ProjectRoles {
+  project_role_id int [pk, unique]
+  project_id int [ref: - P.id]
+  project_role_name varchar
   description text
-  customfieldtype customfieldtypes
-  options int [ref: < customfieldoptions.id, default: 'NULL']
 }
 
-Table customfieldoptions {
-  id int [pk, increment]
-  name varchar
+Table RequirementsByTestSteps {
+  step_id int [ref: - TestSteps.step_id]
+  requirement_id int [ref: - R.requirement_id]
+  indexes {
+    (step_id, requirement_id) [pk]
+  }
 }
 
-Table globalroles {
-  id int [pk, unique]
-  name varchar
-  description text
+Table TestStepsByTestCases { 
+  case_id int [ref: - TestCases.case_id]
+  step_id int [ref: - TestSteps.step_id]
+  indexes {
+    (case_id, step_id) [pk]
+  }
 }
 
-Table projectroles {
-  id int [pk, unique]
-  project int [ref: - P.id]
-  name varchar
-  description text
+Table UsersByProject {
+  user_id int [ref: - U.user_id]
+  project_id int [ref: - P.project_id]
+  indexes {
+    (user_id, project_id) [pk]
+  }
 }
 
-Enum customfieldtypes {
-  varchar
-  text
-  timestamp
-  checkbox
+Table RequirementsByProject {
+  project_id int [ref: - P.project_id]
+  requirement_id int [ref: - R.requirement_id]
+  indexes {
+    (project_id, requirement_id) [pk]
+  }
 }
 
-Enum classification {
-  Unclassified
-  Sensitive
-  Secret
-  TS
-  TSSCI
+Table TestCasesByProject {
+  project_id int [ref: - P.project_id]
+  case_id int [ref: TestCases.case_id]
+  indexes {
+    (project_id, case_id) [pk]
+  }
+}
+
+Table PermissionsByProjectRole {
+  project_role_id int [ref: - ProjectRoles.project_role_id]
+  permission_id int [ref: - Permissions.permission_id]
+  indexes {
+    (project_role_id, permission_id) [pk]
+  }
+}
+
+Table PermissionsByGlobalRole {
+  permission_id int [ref: - Permissions.permission_id]
+  global_role_id int [ref: - GlobalRoles.global_role_id]
+  indexes {
+    (permission_id, global_role_id) [pk]
+  }
+}
+
+Table GlobalRoleByUser {
+  user_id int [ref: - U.user_id]
+  global_role_id int [ref: GlobalRoles.global_role_id]
+  grant_date timestamp
+  indexes {
+    (user_id, global_role_id) [pk]
+  }
+}
+
+Table ProjectRolesByUser {
+  user_id int [ref: - U.user_id]
+  project_role_id int [ref: ProjectRoles.project_role_id]
+  grant_date timestamp
+  indexes {
+    (user_id, project_role_id) [pk]
+  }
 }

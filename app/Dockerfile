@@ -3,7 +3,7 @@ FROM python:3.9.5-buster
 RUN apt update -y && \
     pip install --upgrade pip setuptools
 
-COPY ./app /app
+COPY . /app
 
 WORKDIR /app
 

@@ -1,0 +1,43 @@
+services:
+  postgres:
+    container_name: postgres
+    build:
+      context: ./app/db
+      dockerfile: Docker-postgres
+    restart: always
+    environment:
+      - POSTGRES_USER=ratch_user
+      - POSTGRES_PASSWORD=ratch_pass
+      - POSTGRES_DB=ratch_db
+    volumes:
+      - /etc/hosts:/etc/hosts:rw
+      - db_data:/var/lib/postgresql/data:delegated
+    ports:
+      - 5432:5432
+
+  web:
+    build: ./app
+    container_name: pyramid
+    environment:
+      - APP_NAME=RATCH
+      - POSTGRES_PASSWORD=ratch_pass
+      - POSTGRES_PORT_5432_TCP_ADDR=postgres
+      - POSTGRES_PORT_5432_TCP_PORT=5432
+    depends_on:
+      - postgres
+    ports:
+      - 80:80
+
+  pgadmin:
+    image: dpage/pgadmin4:4.20
+    user: 5050:5050
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=user@domain.com
+      - PGADMIN_DEFAULT_PASSWORD=password
+    links:
+      - postgres
+    ports:
+      - 8080:80
+
+volumes:
+  db_data: {}
