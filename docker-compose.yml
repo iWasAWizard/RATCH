@@ -17,8 +17,9 @@ services:
 
   web:
     build: ./app
-    container_name: pyramid
+    container_name: flask
     environment:
+      - FLASK_ENV=production
       - APP_NAME=RATCH
       - POSTGRES_PASSWORD=ratch_pass
       - POSTGRES_PORT_5432_TCP_ADDR=postgres
@@ -26,7 +27,7 @@ services:
     depends_on:
       - postgres
     ports:
-      - 80:80
+      - 80:5000
 
   pgadmin:
     image: dpage/pgadmin4:4.20

@@ -1,15 +1,22 @@
-from wsgiref.simple_server import make_server
-from pyramid.config import Configurator
-from pyramid.response import Response
+from flask import Flask, request
+from flask_restful import Api, Resource
 
-def hello_world(request):
-    print('REQUEST INBOUND')
-    return Response('Docker works with Pyramid')
+app = Flask(__name__)
+api = Api(app)
+
+requirements = {}
+testcases = {}
+users = {}
+projects = {}
+
+class Requirement(Resource):
+    def get(self, requirement_id):
+        return {requirement_id: requirements[requirement_id]}
+    def put(self, requirement_id):
+        requirements[requirement_id] = request.form['data']
+        return {requirement_id: requirements[requirement_id]}
+
+api.add_resource(Requirement, '/api/requirements/<integer:requirement_id>')
 
 if __name__ == '__main__':
-    config = Configurator()
-    config.add_route('hello', '/')
-    config.add_view(hello_world, route_name='hello')
-    app = config.make_wsgi_app()
-    server = make_server('0.0.0.0', 6543, app)
-    server.serve_forever()
+    app.run(debug=True, host='0.0.0.0')
