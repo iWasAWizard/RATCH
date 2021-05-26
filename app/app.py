@@ -9,6 +9,10 @@ testcases = {}
 users = {}
 projects = {}
 
+@app.route('/')
+def hello_world():
+    return "Hello, world!"
+
 class Requirement(Resource):
     def get(self, requirement_id):
         return {requirement_id: requirements[requirement_id]}
