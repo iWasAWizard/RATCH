@@ -8,14 +8,31 @@ CREATE EXTENSION pgcrypto;
 
 CREATE TABLE IF NOT EXISTS Users (
   user_id SERIAL PRIMARY KEY,
-  first_name VARCHAR (32)NOT NULL,
+  first_name VARCHAR (32) NOT NULL,
   last_name VARCHAR (32) NOT NULL,
   email VARCHAR (64) UNIQUE NOT NULL,
-  username VARCHAR (16) UNIQUE NOT NULL,
+  username VARCHAR (32) UNIQUE NOT NULL,
   password VARCHAR (32) NOT NULL,
   created TIMESTAMP,
   lastseen TIMESTAMP,
   notes TEXT
+);
+
+CREATE TABLE IF NOT EXISTS ReleaseVersions (
+  project_id INT references Projects(project_id),
+  release_version_name VARCHAR (64),
+  release_version_description TEXT,
+  PRIMARY KEY(project_id, release_version_name)
+);
+
+CREATE TABLE IF NOT EXISTS ApiAuthKeys (
+  user_id INT PRIMARY KEY UNIQUE NOT NULL references Users(user_id),
+  authentication_token CHAR (24) UNIQUE NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS Classifications (
+  classification_id SERIAL PRIMARY KEY,
+  classification_name VARCHAR (32) UNIQUE NOT NULL,
 );
 
 CREATE TABLE IF NOT EXISTS RequirementTypes (
@@ -29,16 +46,25 @@ CREATE TABLE IF NOT EXISTS Requirements (
   requirement_name VARCHAR (32),
   release_version VARCHAR (64),
   requirement_desciption TEXT,
+  parent_id INT references Requirements(requirement_id),
   type INT NOT NULL references RequirementTypes(type_id),
-  classification VARCHAR (32),
+  classification INT references Classifications(classification_id),
   last_modified TIMESTAMP,
   last_modified_by INT NOT NULL references Users(user_id)
 );
 
+CREATE TABLE IF NOT EXISTS TestCaseTypes (
+  case_type_id SERIAL PRIMARY KEY,
+  case_type_name VARCHAR (32),
+  case_type_description TEXT
+)
+
 CREATE TABLE IF NOT EXISTS TestCases (
   case_id SERIAL PRIMARY KEY,
   case_name VARCHAR (64),
-  case_description TEXT,
+  case_type INT references TestCaseTypes(case_type_id),
+  case_objective TEXT,
+  case_overview TEXT,
   prerequisites TEXT,
   last_modified TIMESTAMP,
   last_modified_by INT NOT NULL references Users(user_id)
@@ -81,7 +107,8 @@ CREATE TABLE IF NOT EXISTS Projects (
   project_id SERIAL PRIMARY KEY,
   project_name VARCHAR (64) UNIQUE NOT NULL,
   project_description TEXT,
-  classification VARCHAR (32),
+  project_welcome_message TEXT,
+  classification INT references Classifications(classification_id),
   created TIMESTAMP,
   updated TIMESTAMP
 );
@@ -147,7 +174,7 @@ CREATE TABLE IF NOT EXISTS PermissionByProjectRole (
   PRIMARY KEY(project_role_id, permission_id)
 );
 
-CREATE TABLE IF NOT EXISTS GlobalRoleByUser (
+CREATE TABLE IF NOT EXISTS GlobalRolesByUser (
   user_id INT NOT NULL references Users(user_id),
   global_role_id INT NOT NULL references GlobalRoles(global_role_id),
   grant_date TIMESTAMP,

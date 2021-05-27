@@ -5,6 +5,7 @@ Project RATCH {
 
 Table Users as U {
   user_id int [pk, increment, unique]
+  api_key varchar
   first_name varchar
   last_name varchar
   email varchar
@@ -14,11 +15,16 @@ Table Users as U {
   lastseen timestamp [default: `now()`]
 }
 
+Table Classifications {
+  classification_id int [pk, increment, unique]
+  classification_name text
+}
+
 Table Projects as P {
   project_id int [pk, increment, unique]
   project_name varchar
   project_description text
-  classification classification
+  classification int [ref: - Classifications.classification_id]
   created timestamp [default: `now()`]
   updated timestamp [default: `now()`]
  }
@@ -28,8 +34,9 @@ Table Requirements as R {
   requirement_name varchar
   release_version enum
   requirement_description text
+  parent_id int [ref: - R.requirement_id]
   type int [ref: - requirementtypes.type_id]
-  classification classification
+  classification int [ref: - Classifications.classification_id]
   last_modified timestamp [default: `now()`]
   last_modified_by int [ref: - U.user_id]
 }
@@ -43,7 +50,8 @@ Table RequirementTypes {
 Table TestCases as T {
   case_id int [pk, increment]
   case_name varchar
-  case_desciption text
+  case_objective text
+  case_overview text
   prerequisites text
   last_modified timestamp
   last_modified_by int [ref: - U.user_id]
