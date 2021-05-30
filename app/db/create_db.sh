@@ -1,4 +1,4 @@
-#!/bin/bash
+
 
 psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-EOSQL
 
@@ -18,13 +18,6 @@ CREATE TABLE IF NOT EXISTS Users (
   notes TEXT
 );
 
-CREATE TABLE IF NOT EXISTS ReleaseVersions (
-  project_id INT references Projects(project_id),
-  release_version_name VARCHAR (64),
-  release_version_description TEXT,
-  PRIMARY KEY(project_id, release_version_name)
-);
-
 CREATE TABLE IF NOT EXISTS ApiAuthKeys (
   user_id INT PRIMARY KEY UNIQUE NOT NULL references Users(user_id),
   authentication_token CHAR (24) UNIQUE NOT NULL
@@ -32,7 +25,7 @@ CREATE TABLE IF NOT EXISTS ApiAuthKeys (
 
 CREATE TABLE IF NOT EXISTS Classifications (
   classification_id SERIAL PRIMARY KEY,
-  classification_name VARCHAR (32) UNIQUE NOT NULL,
+  classification_name VARCHAR (32) UNIQUE NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS RequirementTypes (
@@ -57,7 +50,7 @@ CREATE TABLE IF NOT EXISTS TestCaseTypes (
   case_type_id SERIAL PRIMARY KEY,
   case_type_name VARCHAR (32),
   case_type_description TEXT
-)
+);
 
 CREATE TABLE IF NOT EXISTS TestCases (
   case_id SERIAL PRIMARY KEY,
@@ -111,6 +104,13 @@ CREATE TABLE IF NOT EXISTS Projects (
   classification INT references Classifications(classification_id),
   created TIMESTAMP,
   updated TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS ReleaseVersions (
+  project_id INT references Projects(project_id),
+  release_version_name VARCHAR (64),
+  release_version_description TEXT,
+  PRIMARY KEY(project_id, release_version_name)
 );
 
 CREATE TABLE IF NOT EXISTS UsersByProject (

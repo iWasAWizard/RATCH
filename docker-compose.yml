@@ -16,10 +16,11 @@ services:
       - 5432:5432
 
   web:
+    restart: always
     build: ./app
     container_name: flask
     environment:
-      - FLASK_ENV=production
+      - FLASK_ENV=development
       - APP_NAME=RATCH
       - POSTGRES_PASSWORD=ratch_pass
       - POSTGRES_PORT_5432_TCP_ADDR=postgres
@@ -28,6 +29,8 @@ services:
       - postgres
     ports:
       - 80:5000
+    volumes:
+      - ./app:/app
 
   pgadmin:
     image: dpage/pgadmin4:4.20
