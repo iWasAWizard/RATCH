@@ -22,6 +22,11 @@ parser.add_argument('name')
 parser.add_argument('text')
 parser.add_argument('type')
 parser.add_argument('user')
+parser.add_argument('first_name')
+parser.add_argument('last_name')
+parser.add_argument('email')
+parser.add_argument('username')
+parser.add_argument('password')
 
 class requirement(Resource):
     def get(self):
@@ -38,8 +43,28 @@ class requirement(Resource):
         cur.execute("""SELECT * FROM Requirements""")
         return cur.fetchall()
 
+class user(Resource):
+    def get(self):
+        cur = database.cursor()
+        cur.execute("""SELECT * FROM Users""")
+        return cur.fetchall()
+
+    def post(self):
+        args = parser.parse_args()
+        cur = database.cursor()
+        cur.execute("""INSERT INTO Users (first_name, last_name, email, username, password) VALUES (%s, %s, %s, %s, %s)""",
+                   (args['first_name'], args['last_name'], args['email'], args['username'], args['password']))
+        database.conn.commit()
+        cur.execute("""SELECT * FROM Users""")
+        return cur.fetchall()
+
+class project(Resource):
+    def get():
+        return
+
 
 api.add_resource(requirement, '/api/requirement/')
+api.add_resource(user, '/api/user/')
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0')
