@@ -38,12 +38,13 @@ CREATE TABLE IF NOT EXISTS Requirements (
   requirement_id SERIAL PRIMARY KEY,
   requirement_name VARCHAR (32),
   release_version VARCHAR (64),
-  requirement_desciption TEXT,
+  requirement_description TEXT,
   parent_id INT references Requirements(requirement_id),
   type INT NOT NULL references RequirementTypes(type_id),
   classification INT references Classifications(classification_id),
   last_modified TIMESTAMP,
-  last_modified_by INT NOT NULL references Users(user_id)
+  last_modified_by INT NOT NULL references Users(user_id),
+  created_by INT NOT NULL references Users(user_id)
 );
 
 CREATE TABLE IF NOT EXISTS TestCaseTypes (
@@ -60,7 +61,8 @@ CREATE TABLE IF NOT EXISTS TestCases (
   case_overview TEXT,
   prerequisites TEXT,
   last_modified TIMESTAMP,
-  last_modified_by INT NOT NULL references Users(user_id)
+  last_modified_by INT NOT NULL references Users(user_id),
+  created_by INT NOT NULL references Users(user_id)
 );
 
 CREATE TABLE IF NOT EXISTS TestSteps (

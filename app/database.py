@@ -21,7 +21,7 @@ class Database():
     def cursor(self):
         if not self.cur or self.cur.closed:
             if not self.conn:
-                self.connect()
+                self.connect(5)
             self.cur = self.conn.cursor()
         return self.cur
 
@@ -31,6 +31,7 @@ class Database():
 
     def connect(self):
         if not self.conn:
+            retry_counter = 0
             try:
                 self.conn = psycopg2.connect(user=self.user,
                                              password=self.password,
@@ -38,13 +39,12 @@ class Database():
                                              port=self.port,
                                              database=self.db,
                                              connect_timeout=5)
-                retry_counter = 0
                 self.conn.autocommit = True
             except psycopg2.OperationalError as e:
-                if not self.reconnect or self.retry_counter >= RETRY_LIMIT:
+                if not self.reconnect or retry_counter >= RETRY_LIMIT:
                     raise e
                 retry_counter += 1
                 time.sleep(5)
-                self.connect(retry_counter)
+                self.connect()
             except (Exception, psycopg2.Error) as e:
                 raise e
