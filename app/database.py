@@ -6,6 +6,7 @@ import psycopg2
 
 RETRY_LIMIT = 5
 
+
 class Database():
     def __init__(self, host, db='ratch_db', user='ratch_user',
                  password='ratch_pass'):
@@ -48,3 +49,11 @@ class Database():
                 self.connect()
             except (Exception, psycopg2.Error) as e:
                 raise e
+
+    def query(self, query, args=(), one=False):
+        cur = self.cur
+        cur.execute(query, args)
+        r = [dict((cur.description[i][0], value) \
+               for i, value in enumerate(row)) for row in cur.fetchall()]
+        cur.connection.close()
+        return (r[0] if r else None) if one else r

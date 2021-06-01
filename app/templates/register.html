@@ -1,0 +1,51 @@
+<html>
+    <head>
+        <link rel="shortcut icon" href="favicon.ico">
+        <title>RATCH Registration</title>
+    </head>
+<body>
+<!-- The message below encapsulated in an "h1" tag is why we call this page a template -->
+<!-- It is what makes this page "dynamic" because the server fills -->
+<!-- in at the spot where you see {{t_message}} with data you sent when you used -->
+<!-- the "render_template()" function. -->
+<h1>{{t_message}}</h1>
+<!-- div to contain form -->
+<div>
+    <!-- Set up form and the file to process user input -->
+    <form id='frmTest' name='frmTest' action='' method='post' onsubmit='return true;'>
+
+    <!-- input box for the user to enter their user name -->
+    <!-- Notice our input has a 'name' (parameter of the HTML input type) of 'username'. -->
+    <!-- This is how our request function chooses which data to retrieve. -->
+    <div class="form-row">
+        Username: <input type="text"  name="username">
+    </div>
+
+    <div class="form-row">
+        Password: <input type="password"  name="password">
+    </div>
+
+    <div class="form-row">
+        First Name: <input type="text"  name="firstname">
+    </div>
+  
+    <div class="form-row">
+        Last Name: <input type="text"  name="lastname">
+    </div>
+    
+    <div class="form-row">
+        Email Address: <input type="email"  name="email">
+    </div>
+
+    <!-- button for user to submit the form -->
+    <div>
+      <input type="submit" name="btn_submit_add_user" value='Join'>
+    </div>
+
+    <!-- Close the form -->
+    </form>
+<!-- Close the container div -->
+</div>
+<!-- Close the body of the HTML document -->
+</body>
+</html>
