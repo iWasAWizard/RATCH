@@ -2,7 +2,6 @@ from flask import Flask, request, render_template
 from flask_restful import Api, Resource, reqparse
 import database as db
 import psycopg2
-import json
 import hashlib
 
 app = Flask(__name__)
@@ -58,8 +57,17 @@ def register():
     password = hashed.hexdigest()
 
     cur = database.cursor()
-    cur.execute("""INSERT INTO Users (first_name, last_name, email, username, password) VALUES (%s, %s, %s, %s, %s)""",
-                firstname, lastname, email, username, password)
+    cur.execute("""INSERT INTO Users (first_name,
+                                      last_name,
+                                      email,
+                                      username,
+                                      password)
+                                      VALUES (%s, %s, %s, %s, %s)""",
+                firstname,
+                lastname,
+                email,
+                username,
+                password)
     try:
         database.conn.commit()
         return "Registration successful!"
@@ -91,31 +99,60 @@ class requirement(Resource):
     def post(self):
         args = parser.parse_args()
         cur = database.cursor()
-        cur.execute("""INSERT INTO Requirements (requirement_name, requirement_description, type, last_modified_by, created_by) VALUES (%s, %s, %s, %s, %s)""",
-                   (args['name'], args['text'], args['type'], args['user'], args['user']))
+        cur.execute("""INSERT INTO Requirements(requirement_name,
+                                              requirement_description,
+                                              type, 
+                                              last_modified_by, 
+                                              created_by)
+                                              VALUES (%s, %s, %s, %s, %s)""",
+                    (args['name'],
+                     args['text'],
+                     args['type'],
+                     args['user'],
+                     args['user']))
         try:
             database.conn.commit()
         except psycopg2.Error as e:
-            t_message = "Database error: " + e + "/n SQL: " + s
+            return f"PostgreSQL Error: {e}"
         cur.close()
         return database.query("""SELECT * FROM Requirements""")
 
 
 class user(Resource):
     def get(self):
-        return database.query("""SELECT user_id, username, first_name, last_name, email FROM Users""")
+        return database.query("""SELECT user_id,
+                                 username,
+                                 first_name,
+                                 last_name,
+                                 email 
+                                 FROM Users""")
 
     def post(self):
         args = parser.parse_args()
         cur = database.cursor()
-        cur.execute("""INSERT INTO Users (first_name, last_name, email, username, password) VALUES (%s, %s, %s, %s, %s)""",
-                   (args['first_name'], args['last_name'], args['email'], args['username'], args['password']))
+        cur.execute("""INSERT INTO Users (first_name,
+                                          last_name,
+                                          email,
+                                          username,
+                                          password) 
+                                          VALUES (%s, %s, %s, %s, %s)""",
+                    (args['first_name'],
+                     args['last_name'],
+                     args['email'],
+                     args['username'],
+                     args['password']))
         try:
             database.conn.commit()
         except psycopg2.Error as e:
-            t_message = "Database error: " + e + "/n SQL: " + s
+            return f"PostgreSQL Error: {e}"
         cur.close()
-        return database.query("""SELECT user_id, username, first_name, last_name, email FROM Users""")
+        return database.query("""SELECT
+                                 user_id,
+                                 username,
+                                 first_name,
+                                 last_name,
+                                 email
+                                 FROM Users""")
 
 
 class project(Resource):
@@ -125,12 +162,15 @@ class project(Resource):
     def post(self):
         args = parser.parse_args()
         cur = database.cursor()
-        cur.execute("""INSERT INTO Projects (project_name, project_description) VALUES (%s, %s)""",
-                   (args['name'], args['text']))
+        cur.execute("""INSERT INTO Projects (project_name,
+                                             project_description)
+                                             VALUES (%s, %s)""",
+                    (args['name'],
+                     args['text']))
         try:
             database.conn.commit()
         except psycopg2.Error as e:
-            t_message = "Database error: " + e + "/n SQL: " + s
+            return f"PostgreSQL Error: {e}"
         cur.close()
         return database.query("""SELECT * FROM Projects""")
 
