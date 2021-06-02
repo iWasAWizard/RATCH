@@ -1,6 +1,6 @@
 from flask import Flask, request, render_template
 from flask_restful import Api, Resource, reqparse
-import database as db
+from . import database as db
 import psycopg2
 import hashlib
 
@@ -74,7 +74,6 @@ def register():
     except psycopg2.Error as e:
         t_message = "Database error: " + e
     cur.close()
-    
     if username in database.query("""SELECT * FROM Users"""):
         t_message = "Registration successful!"
         return render_template("register.html", t_message=t_message)
@@ -101,8 +100,8 @@ class requirement(Resource):
         cur = database.cursor()
         cur.execute("""INSERT INTO Requirements(requirement_name,
                                               requirement_description,
-                                              type, 
-                                              last_modified_by, 
+                                              type,
+                                              last_modified_by,
                                               created_by)
                                               VALUES (%s, %s, %s, %s, %s)""",
                     (args['name'],
@@ -124,7 +123,7 @@ class user(Resource):
                                  username,
                                  first_name,
                                  last_name,
-                                 email 
+                                 email
                                  FROM Users""")
 
     def post(self):
@@ -134,7 +133,7 @@ class user(Resource):
                                           last_name,
                                           email,
                                           username,
-                                          password) 
+                                          password)
                                           VALUES (%s, %s, %s, %s, %s)""",
                     (args['first_name'],
                      args['last_name'],
