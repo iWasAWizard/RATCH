@@ -21,66 +21,76 @@ def login_required(view):
 
     return wrapped_view
 
+@bp.before_app_request
+def load_logged_in_user():
+    user_id = session.get("user_id")
+
+    if user_id is None:
+        g.user = None
+    else:
+        g.user = database.query(f"SELECT * FROM Users WHERE user_id = {user_id}",
+                                one=True)
 
 @bp.route('/register', methods=['POST', 'GET'])
 def register():
-    return render_template("auth/register.html", t_message="Register Here")
-    username = request.form.get("username", "")
-    password = request.form.get("password", "")
-    firstname = request.form.get("firstname", "")
-    lastname = request.form.get("lastname", "")
-    email = request.form.get("email", "")
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+        firstname = request.form['firstname']
+        lastname = request.form['lastname']
+        email = request.form['email']
 
-    error = None
+        error = None
 
-    # Check for user name field is empty
-    if username == "":
-        error = "Register - empty field: Please provide a username."
+        if password == "":
+            error = "Register - empty field: Please provide a password."
 
-    user = database.query('SELECT id FROM user WHERE username = ?')
-    user.fetchone()
-    if user is not None:
-        error = f"User {username} is already registered."
+        if firstname == "":
+            error = "Register - empty field: Please provide a first name."
 
-    if password == "":
-        error = "Register - empty field: Please provide a password."
+        if lastname == "":
+            error = "Register - empty field: Please provide a last name."
 
-    if firstname == "":
-        error = "Register - empty field: Please provide a first name."
+        if email == "":
+            error = "Register - empty field: Please provide an email address."
 
-    if lastname == "":
-        error = "Register - empty field: Please provide a last name."
+        if username == "":
+            error = "Register - empty field: Please provide a username."
 
-    if email == "":
-        error = "Register - empty field: Please provide an email address."
+        user = database.query(f"SELECT user_id FROM Users WHERE username = '{username}'",
+                              one=True)
 
-    # Hash the password they entered into a encrypted hex string
-    password = generate_password_hash(password=password, salt_length=8)
+        if user is not None:
+            error = f"User {username} is already registered."
 
-    cur = database.cursor()
-    cur.execute("""INSERT INTO Users (first_name,
-                                      last_name,
-                                      email,
-                                      username,
-                                      password)
-                                      VALUES (%s, %s, %s, %s, %s)""",
-                firstname,
-                lastname,
-                email,
-                username,
-                password)
+        # Hash the password they entered into a encrypted hex string
+        password = generate_password_hash(password=password, salt_length=8)
 
-    if error is None:
-        try:
-            database.conn.commit()
-            if username in database.query("""SELECT * FROM Users"""):
-                return redirect(url_for('login'))
-        except psycopg2.Error as e:
-            error = "Database error: " + e
+        cur = database.cursor()
+        cur.execute("""INSERT INTO Users (first_name,
+                                        last_name,
+                                        email,
+                                        username,
+                                        password)
+                                        VALUES (%s, %s, %s, %s, %s)""",
+                    (firstname,
+                    lastname,
+                    email,
+                    username,
+                    password))
+
+        if error is None:
+            try:
+                database.conn.commit()
+                if username in database.query("""SELECT * FROM Users"""):
+                    return redirect(url_for('auth.login'))
+            except psycopg2.Error as e:
+                error = "Database error: " + e
+                return error
+            cur.close()
+        else:
             return error
-        cur.close()
-    else:
-        return error
+    return render_template('auth/register.html')
 
 
 @bp.route('/login', methods=['GET', 'POST'])
@@ -88,12 +98,11 @@ def login():
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
+
         error = None
 
-        user = database.query(
-            'SELECT * FROM user WHERE username = ?'
-        )
-        user.fetchone()
+        user = database.query(f'SELECT * FROM Users WHERE username = {username}',
+                              one=True)
 
         if user is None:
             error = 'Incorrect username.'
@@ -108,22 +117,10 @@ def login():
             session.clear()
             session['user_id'] = user['user_id']
             return redirect(url_for('index'))
-
-        flash(error)
+        else:
+            flash(error)
 
     return render_template('auth/login.html')
-
-
-@bp.before_app_request
-def load_logged_in_user():
-    user_id = session.get('user_id')
-
-    if user_id is None:
-        g.user = None
-    else:
-        g.user = database.execute(
-            'SELECT * FROM user WHERE user_id = ?')
-        g.user.fetchone()
 
 
 @bp.route('/logout')
