@@ -1,83 +1,13 @@
-from flask import Flask, request, render_template
+from flask import Blueprint
 from flask_restful import Api, Resource, reqparse
-from . import database as db
+from RATCH.db import Database
 import psycopg2
-import hashlib
 
-app = Flask(__name__)
-api = Api(app)
-
-requirements = {}
-testcases = {}
-users = {}
-projects = {}
-
-database = db.Database(host='postgres')
+database = Database(host='postgres')
 database.init()
 
-
-@app.route('/', methods=['POST', 'GET'])
-def index():
-    return render_template('index.html')
-
-
-@app.route('/register', methods=['POST', 'GET'])
-def register():
-    return render_template("register.html", t_message="Register Here")
-    username = request.form.get("username", "")
-    password = request.form.get("password", "")
-    firstname = request.form.get("firstname", "")
-    lastname = request.form.get("lastname", "")
-    email = request.form.get("email", "")
-
-    # Check for user name field is empty
-    if username == "":
-        t_message = "Register - empty field: Please provide a username."
-        # Send user back to the dynamic html page (template), with a message
-        return render_template("register.html", t_message=t_message)
-
-    if password == "":
-        t_message = "Register - empty field: Please provide a password."
-        return render_template("register.html", t_message=t_message)
-
-    if firstname == "":
-        t_message = "Register - empty field: Please provide a first name."
-        return render_template("register.html", t_message=t_message)
-
-    if lastname == "":
-        t_message = "Register - empty field: Please provide a last name."
-        return render_template("register.html", t_message=t_message)
-
-    if email == "":
-        t_message = "Register - empty field: Please provide an email address."
-        return render_template("register.html", t_message=t_message)
-
-    # Hash the password they entered into a encrypted hex string
-    hashed = hashlib.sha256(password.encode())
-    password = hashed.hexdigest()
-
-    cur = database.cursor()
-    cur.execute("""INSERT INTO Users (first_name,
-                                      last_name,
-                                      email,
-                                      username,
-                                      password)
-                                      VALUES (%s, %s, %s, %s, %s)""",
-                firstname,
-                lastname,
-                email,
-                username,
-                password)
-    try:
-        database.conn.commit()
-        return "Registration successful!"
-    except psycopg2.Error as e:
-        t_message = "Database error: " + e
-    cur.close()
-    if username in database.query("""SELECT * FROM Users"""):
-        t_message = "Registration successful!"
-        return render_template("register.html", t_message=t_message)
-
+bp = Blueprint('api', __name__, url_prefix='/api')
+api = Api(bp)
 
 parser = reqparse.RequestParser()
 parser.add_argument('name')
@@ -174,9 +104,6 @@ class project(Resource):
         return database.query("""SELECT * FROM Projects""")
 
 
-api.add_resource(requirement, '/api/requirements/')
-api.add_resource(user, '/api/users/')
-api.add_resource(project, '/api/projects')
-
-if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0')
+api.add_resource(requirement, '/requirements/')
+api.add_resource(user, '/users/')
+api.add_resource(project, '/projects')

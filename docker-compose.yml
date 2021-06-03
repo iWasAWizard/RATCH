@@ -2,7 +2,7 @@ services:
   postgres:
     container_name: postgres
     build:
-      context: ./app/db
+      context: ./RATCH/database
       dockerfile: Docker-postgres
     restart: always
     environment:
@@ -17,20 +17,21 @@ services:
 
   web:
     restart: always
-    build: ./app
+    build:
+      context: ./RATCH
     container_name: flask
     environment:
       - FLASK_ENV=development
-      - APP_NAME=RATCH
+      - FLASK_APP=RATCH:create_app
       - POSTGRES_PASSWORD=ratch_pass
       - POSTGRES_PORT_5432_TCP_ADDR=postgres
       - POSTGRES_PORT_5432_TCP_PORT=5432
     depends_on:
       - postgres
     ports:
-      - 80:5000
+      - 80:80
     volumes:
-      - ./app:/app
+      - ./RATCH:/RATCH
 
   pgadmin:
     image: dpage/pgadmin4:4.20
