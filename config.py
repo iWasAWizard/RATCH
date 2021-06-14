@@ -28,8 +28,9 @@ class ProductionConfig(Config):
     REMEMBER_COOKIE_DURATION = 3600
 
     # PostgreSQL database
-    SQLALCHEMY_DATABASE_URI = '{}://{}:{}@{}:{}/{}'.format(
+    SQLALCHEMY_DATABASE_URI = '{}+{}://{}:{}@{}:{}/{}'.format(
         config( 'DB_ENGINE'   , default='postgresql'),
+        config( 'DB_DIALECT'  , default='psycopg2'  ),
         config( 'DB_USERNAME' , default='ratch_user'),
         config( 'DB_PASS'     , default='ratch'     ),
         config( 'DB_HOST'     , default='postgres'  ),

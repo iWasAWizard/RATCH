@@ -3,7 +3,7 @@ services:
   postgres:
     restart: always
     build:
-      context: ./app/database
+      context: ./database
       dockerfile: Docker-postgres
     environment:
       - POSTGRES_USER=ratch_user
@@ -16,6 +16,7 @@ services:
       - 5432:5432
     networks:
       - db_network
+
   ratch-app:
     restart: always
     env_file: .env
@@ -27,6 +28,7 @@ services:
     networks:
       - db_network
       - web_network
+
   nginx:
     restart: always
     image: "nginx:latest"
@@ -38,6 +40,7 @@ services:
       - web_network
     depends_on: 
       - ratch-app
+
   pgadmin:
     image: dpage/pgadmin4:4.20
     user: 5050:5050

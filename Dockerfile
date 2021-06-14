@@ -9,4 +9,4 @@ RUN pip install -r requirements-pgsql.txt
 
 EXPOSE 5000
 
-CMD ["gunicorn", "--reload", "--config", "gunicorn-cfg.py", "run:app"]
+CMD ["gunicorn", "--config", "gunicorn-cfg.py", "run:app"]

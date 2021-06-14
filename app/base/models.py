@@ -4,7 +4,8 @@ Copyright (c) 2019 - present AppSeed.us
 """
 
 from flask_login import UserMixin
-from sqlalchemy import Binary, Column, Integer, String, DateTime
+from sqlalchemy import Binary, Column, Integer, String, DateTime, Table
+from sqlalchemy.orm import synonym
 
 from app import db, login_manager
 
@@ -13,17 +14,19 @@ from app.base.util import hash_pass
 
 class Users(db.Model, UserMixin):
 
-    __tablename__ = 'Users'
+    __tablename__ = 'users'
 
-    id = Column('user_id', Integer, primary_key=True)
-    username = Column(String(32), unique=True)
-    email = Column(String(64), unique=True)
-    first_name = Column(String(32))
-    last_name = Column(String(32))
-    password = Column(Binary)
-    created = Column(DateTime)
-    lastseen = Column(DateTime)
-    notes = Column(String)
+    user_id    = Column(Integer, primary_key=True)
+    username   = Column(String(32), unique=True, nullable=False)
+    email      = Column(String(64), unique=True, nullable=False)
+    first_name = Column(String(32), nullable=False)
+    last_name  = Column(String(32))
+    password   = Column(Binary)
+    created    = Column(DateTime)
+    lastseen   = Column(DateTime)
+    notes      = Column(String)
+
+    id         = synonym('user_id')
 
     def __init__(self, **kwargs):
         for property, value in kwargs.items():
