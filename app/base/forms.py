@@ -30,9 +30,13 @@ class CreateAccountForm(FlaskForm):
                              validators=[DataRequired()])
 
 
-class CreateNewRequirement(FlaskForm):
+class CreateRequirementForm(FlaskForm):
     pass
 
 
-class CreateNewTestCase(FlaskForm):
+class CreateTestCaseForm(FlaskForm):
+    pass
+
+
+class CreateProjectForm(FlaskForm):
     pass

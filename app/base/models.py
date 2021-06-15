@@ -4,7 +4,7 @@ Copyright (c) 2019 - present AppSeed.us
 """
 
 from flask_login import UserMixin
-from sqlalchemy import Binary, Column, Integer, String, DateTime, Table, Text
+from sqlalchemy import Binary, Column, Integer, String, DateTime, Text
 from sqlalchemy.orm import synonym
 
 from app import db, login_manager
@@ -100,3 +100,14 @@ class Classifications(db.Model):
     classification_name = Column(String(32), unique=True, nullable=False)
 
     id = synonym('classification_id')
+
+
+class TestStepTypes(db.Model):
+
+    __tablename__ = 'teststeptypes'
+
+    step_type_id = Column(Integer, primary_key=True)
+    step_type_name = Column(String(32), unique=True, nullable=False)
+    step_type_description = Column(Text)
+
+    id = synonym('step_type_id')
