@@ -24,7 +24,7 @@ class Users(db.Model, UserMixin):
     password = Column(Binary)
     created = Column(DateTime)
     lastseen = Column(DateTime)
-    notes = Column(String)
+    notes = Column(Text)
     authentication_token = Column(String, unique=True, nullable=False)
 
     id = synonym('user_id')
