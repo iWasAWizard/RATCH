@@ -4,7 +4,7 @@ Copyright (c) 2019 - present AppSeed.us
 """
 
 from flask_login import UserMixin
-from sqlalchemy import Binary, Column, Integer, String, DateTime, Table
+from sqlalchemy import Binary, Column, Integer, String, DateTime, Table, Text
 from sqlalchemy.orm import synonym
 
 from app import db, login_manager
@@ -16,17 +16,18 @@ class Users(db.Model, UserMixin):
 
     __tablename__ = 'users'
 
-    user_id    = Column(Integer, primary_key=True)
-    username   = Column(String(32), unique=True, nullable=False)
-    email      = Column(String(64), unique=True, nullable=False)
+    user_id = Column(Integer, primary_key=True)
+    username = Column(String(32), unique=True, nullable=False)
+    email = Column(String(64), unique=True, nullable=False)
     first_name = Column(String(32), nullable=False)
-    last_name  = Column(String(32))
-    password   = Column(Binary)
-    created    = Column(DateTime)
-    lastseen   = Column(DateTime)
-    notes      = Column(String)
+    last_name = Column(String(32))
+    password = Column(Binary)
+    created = Column(DateTime)
+    lastseen = Column(DateTime)
+    notes = Column(String)
+    authentication_token = Column(String, unique=True, nullable=False)
 
-    id         = synonym('user_id')
+    id = synonym('user_id')
 
     def __init__(self, **kwargs):
         for property, value in kwargs.items():
@@ -56,3 +57,35 @@ def request_loader(request):
     username = request.form.get('username')
     user = Users.query.filter_by(username=username).first()
     return user if user else None
+
+
+class RequirementTypes(db.Model):
+
+    __tablename__ = 'requirementtypes'
+
+    type_id = Column(Integer, primary_key=True)
+    type_name = Column(String(32), unique=True, nullable=False)
+    type_description = Column(Text)
+
+    id = synonym('type_id')
+
+
+class TestCaseTypes(db.model):
+
+    __tablename__ = 'testcasetypes'
+
+    case_type_id = Column(Integer, primary_key=True)
+    case_type_name = Column(String(32), unique=True, nullable=False)
+    case_type_description = Column(Text)
+
+    id = synonym('case_type_id')
+
+
+class Classifications(db.Model):
+
+    __tablename__ = 'classifications'
+
+    classification_id = Column(Integer, primary_key=True)
+    classification_name = Column(String(32), unique=True, nullable=False)
+
+    id = synonym('classification_id')

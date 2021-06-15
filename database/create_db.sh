@@ -13,12 +13,8 @@ CREATE TABLE IF NOT EXISTS Users (
   password BYTEA NOT NULL,
   created TIMESTAMP,
   lastseen TIMESTAMP,
+  authentication_token CHAR (32) UNIQUE NOT NULL,
   notes TEXT
-);
-
-CREATE TABLE IF NOT EXISTS ApiAuthKeys (
-  user_id INT PRIMARY KEY UNIQUE NOT NULL references Users(user_id),
-  authentication_token CHAR (24) UNIQUE NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS Classifications (
@@ -47,7 +43,7 @@ CREATE TABLE IF NOT EXISTS Requirements (
 
 CREATE TABLE IF NOT EXISTS TestCaseTypes (
   case_type_id SERIAL PRIMARY KEY,
-  case_type_name VARCHAR (32),
+  case_type_name VARCHAR (32) UNIQUE NOT NULL,
   case_type_description TEXT
 );
 
@@ -140,8 +136,7 @@ CREATE TABLE IF NOT EXISTS Permissions (
 CREATE TABLE IF NOT EXISTS ProjectRoles (
   project_role_id SERIAL PRIMARY KEY,
   project_role_name VARCHAR (32),
-  project_id INT NOT NULL references Projects(project_id),
-  description TEXT
+  project_role_description TEXT
 );
 
 CREATE TABLE IF NOT EXISTS PermissionsByProjectRole (
@@ -162,18 +157,6 @@ CREATE TABLE IF NOT EXISTS PermissionsByGlobalRole (
   PRIMARY KEY(global_role_id, permission_id)
 );
 
-CREATE TABLE IF NOT EXISTS ProjectRoles (
-  project_role_id SERIAL PRIMARY KEY,
-  project_role_name VARCHAR (32) NOT NULL,
-  project_role_description TEXT
-);
-
-CREATE TABLE IF NOT EXISTS PermissionByProjectRole (
-  project_role_id INT NOT NULL references ProjectRoles(project_role_id),
-  permission_id INT NOT NULL references Permissions(permission_id),
-  PRIMARY KEY(project_role_id, permission_id)
-);
-
 CREATE TABLE IF NOT EXISTS GlobalRolesByUser (
   user_id INT NOT NULL references Users(user_id),
   global_role_id INT NOT NULL references GlobalRoles(global_role_id),
@@ -187,5 +170,42 @@ CREATE TABLE IF NOT EXISTS ProjectRolesByUser (
   grant_date TIMESTAMP,
   PRIMARY KEY(user_id, project_role_id)
 );
+
+INSERT INTO Classifications (classification_name)
+VALUES
+    ('Unclassified'),
+    ('Unclassified//FOUO'),
+    ('Confidential'),
+    ('Secret'),
+    ('Top Secret'),
+    ('SCI'),
+    ('Top Secret//SCI');
+
+INSERT INTO RequirementTypes (type_name, type_description)
+VALUES
+    ('Functional', 'Describes a behavior of a system or function.'),
+    ('Non-Functional', 'Describes non-functional system characteristics such as appearance.'),
+    ('Constraint', 'Describes a limitation of a system characteristic or function.'),
+    ('Performance', 'Describes a benchmark to which a characteristic of a function must be held.'),
+    ('Specification', 'Describes in exacting detail an aspect of a system.'),
+    ('Accessibility', 'Describes a function or feature related to system accessibility by non-standard users.');
+
+INSERT INTO TestCaseTypes (case_type_name, case_type_description)
+VALUES
+    ('User Interface', 'Validates a portion of a system UI.'),
+    ('Performance', 'Validates the functionality of a system under load conditions.'),
+    ('Functional', 'Validates a portion of system functionality.');
+
+INSERT INTO GlobalRoles (global_role_name, global_role_description)
+VALUES
+    ('Administrator', 'Global instance administrator, with all rights to modify any project or system setting.'),
+    ('User', 'Standard user, with the ability to be granted additional permissions on a per-project basis.');
+
+INSERT INTO ProjectRoles (project_role_name, project_role_description)
+VALUES
+    ('Project Owner', 'Allows administration and configuration of a project, as well as the ability to add and manage users.'),
+    ('Developer', 'Allows creation and modification of requirements, datasets, test cycles and test cases.'),
+    ('Auditor', 'Allows read-only access to all aspects of a project.'),
+    ('Test Automation', 'A robot user for executing test cycles.');
 
 EOSQL

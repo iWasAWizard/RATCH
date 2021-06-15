@@ -3,6 +3,7 @@
 Copyright (c) 2019 - present AppSeed.us
 """
 
+from datetime import datetime
 from flask import jsonify, render_template, redirect, request, url_for
 from flask_login import (
     current_user,
@@ -16,7 +17,7 @@ from app.base import blueprint
 from app.base.forms import LoginForm, CreateAccountForm
 from app.base.models import Users
 
-from app.base.util import verify_pass
+from app.base.util import verify_pass, create_api_authentication_token
 
 
 @blueprint.route('/')
@@ -39,7 +40,7 @@ def login():
         user = Users.query.filter_by(username=username).first()
 
         # Check the password
-        if user and verify_pass( password, user.password):
+        if user and verify_pass(password, user.password):
 
             login_user(user)
             return redirect(url_for('base_blueprint.route_default'))
@@ -59,14 +60,13 @@ def register():
     create_account_form = CreateAccountForm(request.form)
     if 'register' in request.form:
 
-        username  = request.form['username']
-        email     = request.form['email']
-
+        username = request.form['username']
+        email = request.form['email']
 
         # Check usename exists
         user = Users.query.filter_by(username=username).first()
         if user:
-            return render_template('accounts/register.html', 
+            return render_template('accounts/register.html',
                                    msg='Username already registered',
                                    success=False,
                                    form=create_account_form)
@@ -74,18 +74,21 @@ def register():
         # Check email exists
         user = Users.query.filter_by(email=email).first()
         if user:
-            return render_template('accounts/register.html', 
-                                   msg='Email already registered', 
+            return render_template('accounts/register.html',
+                                   msg='Email already registered',
                                    success=False,
                                    form=create_account_form)
 
         # else we can create the user
-        user = Users(**request.form)
+        user = Users(created=datetime.utcnow(),
+                     lastseen=datetime.utcnow(),
+                     authentication_token=create_api_authentication_token(),
+                     **request.form)
         db.session.add(user)
         db.session.commit()
 
-        return render_template('accounts/register.html', 
-                               msg='User created! Please <a href="/login">login</a>.', 
+        return render_template('accounts/register.html',
+                               msg='User created! Please <a href="/login">login</a>.',
                                success=True,
                                form=create_account_form)
 
@@ -98,7 +101,7 @@ def logout():
     logout_user()
     return redirect(url_for('base_blueprint.login'))
 
-## Errors
+# Errors
 
 
 @login_manager.unauthorized_handler

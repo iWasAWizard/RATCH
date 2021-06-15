@@ -42,7 +42,7 @@ services:
       - ratch-app
 
   pgadmin:
-    image: dpage/pgadmin4:4.20
+    image: dpage/pgadmin4:latest
     user: 5050:5050
     environment:
       - PGADMIN_DEFAULT_EMAIL=user@domain.com
