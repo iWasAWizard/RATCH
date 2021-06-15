@@ -47,10 +47,17 @@ CREATE TABLE IF NOT EXISTS TestCaseTypes (
   case_type_description TEXT
 );
 
+CREATE TABLE IF NOT EXISTS TestCaseFormats (
+  format_id SERIAL PRIMARY KEY,
+  format_name VARCHAR (32) UNIQUE NOT NULL,
+  format_description TEXT
+);
+
 CREATE TABLE IF NOT EXISTS TestCases (
   case_id SERIAL PRIMARY KEY,
   case_name VARCHAR (64),
   case_type INT references TestCaseTypes(case_type_id),
+  case_format INT references TestCaseFormats(format_id),
   case_objective TEXT,
   case_overview TEXT,
   prerequisites TEXT,
@@ -194,7 +201,13 @@ INSERT INTO TestCaseTypes (case_type_name, case_type_description)
 VALUES
     ('User Interface', 'Validates a portion of a system UI.'),
     ('Performance', 'Validates the functionality of a system under load conditions.'),
-    ('Functional', 'Validates a portion of system functionality.');
+    ('Functional', 'Validates a portion of system functionality.'),
+    ('Ad-hoc', 'A test which seeks to uncover bugs through system exploration.');
+
+INSERT INTO TestCaseFormats (format_name, format_description)
+VALUES
+    ('Step-driven', 'The default test case style. Discreet steps with procedure, verification and notes sections.'),
+    ('Free-text', 'Markdown-formatted text with no implicit discreet steps.');
 
 INSERT INTO GlobalRoles (global_role_name, global_role_description)
 VALUES

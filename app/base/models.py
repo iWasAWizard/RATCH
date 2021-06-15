@@ -81,6 +81,17 @@ class TestCaseTypes(db.model):
     id = synonym('case_type_id')
 
 
+class TestCaseFormats(db.Model):
+
+    __tablename__ = 'testcaseformats'
+
+    format_id = Column(Integer, primary_key=True)
+    format_name = Column(String(32), unique=True, nullable=True)
+    format_description = Column(Text)
+
+    id = synonym('format_id')
+
+
 class Classifications(db.Model):
 
     __tablename__ = 'classifications'
