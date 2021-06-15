@@ -203,7 +203,7 @@ VALUES
     ('Constraint', 'Describes a limitation of a system characteristic or function.'),
     ('Performance', 'Describes a benchmark to which a characteristic of a function must be held.'),
     ('Specification', 'Describes in exacting detail an aspect of a system.'),
-    ('Accessibility', 'Describes a function or feature related to system accessibility by non-standard users.');
+    ('Accessibility', 'Describes a function or feature related to system accessibility by users with various disabilities.');
 
 INSERT INTO TestCaseTypes (case_type_name, case_type_description)
 VALUES
