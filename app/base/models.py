@@ -4,7 +4,8 @@ Copyright (c) 2019 - present AppSeed.us
 """
 
 from flask_login import UserMixin
-from sqlalchemy import Binary, Column, Integer, String, DateTime, Text
+from sqlalchemy import Binary, Column, Integer, \
+                       String, DateTime, Text, ForeignKey
 from sqlalchemy.orm import synonym
 
 from app import db, login_manager
@@ -59,6 +60,19 @@ def request_loader(request):
     return user if user else None
 
 
+class Classifications(db.Model):
+
+    __tablename__ = 'classifications'
+
+    classification_id = Column(Integer, primary_key=True)
+    classification_name = Column(String(32), unique=True, nullable=False)
+
+    id = synonym('classification_id')
+
+    def __repr__(self):
+        return self.classification_name
+
+
 class RequirementTypes(db.Model):
 
     __tablename__ = 'requirementtypes'
@@ -69,16 +83,30 @@ class RequirementTypes(db.Model):
 
     id = synonym('type_id')
 
+    def __repr__(self):
+        return self.type_name
 
-class TestCaseTypes(db.model):
 
-    __tablename__ = 'testcasetypes'
+class Requirements(db.Model):
 
-    case_type_id = Column(Integer, primary_key=True)
-    case_type_name = Column(String(32), unique=True, nullable=False)
-    case_type_description = Column(Text)
+    __tablename__ = 'requirements'
 
-    id = synonym('case_type_id')
+    requirement_id = Column(Integer, primary_key=True)
+    requirement_name = Column(String(32), unique=True, nullable=False)
+    release_version = Column(String(64))
+    requirement_description = Column(Text)
+    parent_id = Column(Integer, ForeignKey('requirements.id'))
+    requirement_type = Column(Integer, ForeignKey('requirementtypes.id'))
+    classification = Column(Integer, ForeignKey('classifications.id'))
+    created = Column(DateTime)
+    last_modified = Column(DateTime)
+    last_modified_by = Column(Integer, ForeignKey('users.id'))
+    created_by = Column(Integer, ForeignKey('users.id'))
+
+    id = synonym('requirement_id')
+
+    def __repr__(self):
+        return self.requirement_name
 
 
 class TestCaseFormats(db.Model):
@@ -91,15 +119,44 @@ class TestCaseFormats(db.Model):
 
     id = synonym('format_id')
 
+    def __repr__(self):
+        return self.format_name
 
-class Classifications(db.Model):
 
-    __tablename__ = 'classifications'
+class TestCaseTypes(db.model):
 
-    classification_id = Column(Integer, primary_key=True)
-    classification_name = Column(String(32), unique=True, nullable=False)
+    __tablename__ = 'testcasetypes'
 
-    id = synonym('classification_id')
+    case_type_id = Column(Integer, primary_key=True)
+    case_type_name = Column(String(32), unique=True, nullable=False)
+    case_type_description = Column(Text)
+
+    id = synonym('case_type_id')
+
+    def __repr__(self):
+        return self.case_type_name
+
+
+class TestCases(db.Model):
+
+    __tablename__ = 'testcases'
+
+    case_id = Column(Integer, primary_key=True)
+    case_name = Column(String(64), unique=True, nullable=False)
+    case_type = Column(Integer, ForeignKey('testcasetypes.id'))
+    case_format = Column(Integer, ForeignKey('testcaseformats.id'))
+    case_objective = Column(Text)
+    case_overview = Column(Text)
+    prerequisites = Column(Text)
+    created = Column(DateTime)
+    last_modified = Column(DateTime)
+    last_modified_by = Column(Integer, ForeignKey('users.id'))
+    created_by = Column(Integer, ForeignKey('users.id'))
+
+    id = synonym('case_id')
+
+    def __repr__(self):
+        return self.case_name
 
 
 class TestStepTypes(db.Model):
@@ -111,3 +168,42 @@ class TestStepTypes(db.Model):
     step_type_description = Column(Text)
 
     id = synonym('step_type_id')
+
+    def __repr__(self):
+        return self.step_type_name
+
+
+class TestSteps(db.Model):
+
+    __tablename__ = 'teststeps'
+
+    step_id = Column(Integer, primary_key=True)
+    procedure_text = Column(Text)
+    verification_text = Column(Text)
+    notes = Column(Text)
+    test_case = Column(Integer, ForeignKey('testcases.id'))
+    step_number = Column(Integer)
+
+    id = synonym('step_id')
+
+    def __repr__(self):
+        return self.step_id
+
+
+class Projects(db.Model):
+
+    __tablename__ = 'projects'
+
+    project_id = Column(Integer, primary_key=True)
+    project_name = Column(String(32), unique=True, nullable=False)
+    project_description = Column(Text)
+    project_welcome_message = Column(Text)
+    classification = Column(Integer, ForeignKey('classifications.id'))
+    created = Column(DateTime)
+    last_modified = Column(DateTime)
+    created_by = Column(Integer, ForeignKey('users.id'))
+
+    id = synonym('project_id')
+
+    def __repr__(self):
+        return self.project_name
