@@ -22,6 +22,17 @@ CREATE TABLE IF NOT EXISTS Classifications (
   classification_name VARCHAR (32) UNIQUE NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS Projects (
+  project_id SERIAL PRIMARY KEY,
+  project_name VARCHAR (64) UNIQUE NOT NULL,
+  project_description TEXT,
+  project_welcome_message TEXT,
+  classification INT references Classifications(classification_id),
+  created TIMESTAMP,
+  last_modified TIMESTAMP,
+  created_by INT NOT NULL references Users(user_id)
+);
+
 CREATE TABLE IF NOT EXISTS RequirementTypes (
   type_id SERIAL PRIMARY KEY,
   type_name VARCHAR (32) UNIQUE NOT NULL,
@@ -33,7 +44,8 @@ CREATE TABLE IF NOT EXISTS Requirements (
   requirement_name VARCHAR (32) UNIQUE NOT NULL,
   release_version VARCHAR (64),
   requirement_description TEXT,
-  parent_id INT references Requirements(requirement_id),
+  parent_project INT references Projects(project_id),
+  parent_requirement INT references Requirements(requirement_id),
   requirement_type INT NOT NULL references RequirementTypes(type_id),
   classification INT references Classifications(classification_id),
   last_modified TIMESTAMP,
@@ -104,17 +116,6 @@ CREATE TABLE IF NOT EXISTS CustomFields (
   custom_field_name VARCHAR (32) NOT NULL,
   custom_field_description TEXT,
   custom_field_type INT NOT NULL references CustomFieldTypes(custom_field_type_id)
-);
-
-CREATE TABLE IF NOT EXISTS Projects (
-  project_id SERIAL PRIMARY KEY,
-  project_name VARCHAR (64) UNIQUE NOT NULL,
-  project_description TEXT,
-  project_welcome_message TEXT,
-  classification INT references Classifications(classification_id),
-  created TIMESTAMP,
-  last_modified TIMESTAMP,
-  created_by INT NOT NULL references Users(user_id)
 );
 
 CREATE TABLE IF NOT EXISTS ReleaseVersions (
@@ -217,7 +218,7 @@ VALUES
     ('Step-driven', 'The default test case style. Discreet steps with procedure, verification and notes sections.'),
     ('Free-text', 'Markdown-formatted text with no implicit discreet steps.');
 
-INSERT INTO TestCaseFormats (step_type_name, step_type_description)
+INSERT INTO TestStepTypes (step_type_name, step_type_description)
 VALUES
     ('Procedural', 'A standard test step, with procedure, verification, and notes sections.'),
     ('Informational', 'A note inserted by the engineer to note details or important information about upcoming steps.');

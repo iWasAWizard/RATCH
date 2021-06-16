@@ -1,6 +1,6 @@
 {% extends "layouts/base-fullscreen.html" %}
 
-{% block title %} 404 Page {% endblock %}
+{% block title %} Referenced object not found! {% endblock %}
 
 {% block content %}   
 
@@ -17,12 +17,14 @@
                     <div class="mb-4">
                         <i class="feather x-circle"></i>
                     </div>
-                    <h3 class="mb-4">Error 404</h3>
+                    <h3 class="mb-4">Object not found!</h3>
 
                     <br />
 
                     <span class="mb-0 text-muted">
-                        Page not found - <a href="/">Home</a> 
+                        {{ msg }}
+                        <br />
+                        <a href="/">Home</a> 
                     </span>
 
                 </div>

@@ -28,6 +28,8 @@ services:
     networks:
       - db_network
       - web_network
+    depends_on: 
+      - postgres
 
   nginx:
     restart: always
@@ -58,5 +60,6 @@ networks:
     driver: bridge
   web_network:
     driver: bridge
+
 volumes:
   db_data: {}

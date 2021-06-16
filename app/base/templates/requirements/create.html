@@ -1,6 +1,6 @@
 {% extends "layouts/base-fullscreen.html" %}
 
-{% block title %} Register {% endblock %}
+{% block title %} Create New Requirement {% endblock %}
 
 {% block content %}   
 
@@ -17,13 +17,14 @@
                     <div class="mb-4">
                         <i class="feather icon-user-plus auth-icon"></i>
                     </div>
-                    <h3 class="mb-4">Sign up</h3>
+                    <h3 class="mb-4">New Requirement</h3>
+                    <h4 class="mb-4">{{ form.release_versions }}</h4> 
 
                     <span class="mb-0 text-muted">
                         {% if msg %}
                             {{ msg | safe }}
                         {% else %}
-                            Create a new account
+                            Create a new requirement
                         {% endif %} 
                     </span>
 
@@ -32,41 +33,35 @@
 
                     <!-- Hide the form on success -->
                     {% if not success %}
-                    <form role="form" method="post" action="">
-
-                        {{ form.hidden_tag() }}                    
+                    <form role="form" method="post" action="">                
 
                         <div class="input-group mb-3">
-                            {{ form.username(placeholder="Username", class="form-control") }}
-                        </div>
-
-                        <div class="input-group mb-3">
-                            {{ form.password(placeholder="Password", class="form-control", type="password") }}
+                            {{ form.requirement_type(placeholder="Requirement Type", class="form-control") }}
                         </div>
                         
                         <div class="input-group mb-3">
-                            {{ form.email(placeholder="Email", class="input form-control", type="email") }}
+                            {{ form.classification(placeholder="Classification Level", class="form-control") }}
                         </div>
 
                         <div class="input-group mb-3">
-                            {{ form.first_name(placeholder="First Name", class="form-control") }}
+                            {{ form.parent_requirement(placeholder="Parent Requirement", class="form-control") }}
                         </div>
 
                         <div class="input-group mb-3">
-                            {{ form.last_name(placeholder="Last Name", class="form-control") }}
+                            {{ form.requirement_name(placeholder="Requirement Name", class="form-control", type="text") }}
                         </div>
 
-                        <div class="form-group text-left">
-                            <div class="checkbox checkbox-fill d-inline">
-                                <input type="checkbox" name="checkbox-fill-1" id="checkbox-fill-a1" checked="">
-                            </div>
+                        <div class="input-group mb-3">
+                            {{ form.release_version(placeholder="Release Version", class="form-control") }}
                         </div>
-                        <button type="submit" name="register" class="btn btn-primary shadow-2 mb-4">Register</button>
+
+                        <div class="input-group mb-3">
+                            {{ form.requirement_description(placeholder="Requirement Text", class="form-control", type="textarea") }}
+                        </div>
+
+                        <button type="submit" name="create" class="btn btn-primary shadow-2 mb-4">Create Project</button>
 
                     </form>
-                    
-                    <p class="mb-0 text-muted">Already have an account? <a href="{{ url_for('base_blueprint.login') }}" >Login</a></p>
-                    <br />
                     {% endif %}
 
                     <p class="mb-2 text-muted">

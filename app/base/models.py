@@ -4,13 +4,31 @@ Copyright (c) 2019 - present AppSeed.us
 """
 
 from flask_login import UserMixin
-from sqlalchemy import Binary, Column, Integer, \
-                       String, DateTime, Text, ForeignKey
-from sqlalchemy.orm import synonym
+from sqlalchemy import (
+    Binary,
+    Column,
+    Integer,
+    String,
+    DateTime,
+    Text,
+    ForeignKey
+)
 
-from app import db, login_manager
+from app import db, login_manager, create_app
+
+from decouple import config
+from config import config_dict
 
 from app.base.util import hash_pass
+
+# WARNING: Don't run with debug turned on in production!
+DEBUG = config('Debug', default=False, cast=bool)
+
+# The configuration
+get_config_mode = 'Debug' if DEBUG else 'Production'
+
+app_config = config_dict[get_config_mode.capitalize()]
+app = create_app(app_config)
 
 
 class Users(db.Model, UserMixin):
@@ -27,8 +45,6 @@ class Users(db.Model, UserMixin):
     lastseen = Column(DateTime)
     notes = Column(Text)
     authentication_token = Column(String, unique=True, nullable=False)
-
-    id = synonym('user_id')
 
     def __init__(self, **kwargs):
         for property, value in kwargs.items():
@@ -49,8 +65,8 @@ class Users(db.Model, UserMixin):
 
 
 @login_manager.user_loader
-def user_loader(id):
-    return Users.query.filter_by(id=id).first()
+def user_loader(user_id):
+    return Users.query.filter_by(user_id=user_id).first()
 
 
 @login_manager.request_loader
@@ -67,10 +83,19 @@ class Classifications(db.Model):
     classification_id = Column(Integer, primary_key=True)
     classification_name = Column(String(32), unique=True, nullable=False)
 
-    id = synonym('classification_id')
+    def __init__(self, **kwargs):
+        for property, value in kwargs.items():
+            if hasattr(value, '__iter__') and not isinstance(value, str):
+                value = value[0]
+            
+            setattr(self, property, value)
 
     def __repr__(self):
-        return self.classification_name
+        return str(self.classification_name)
+
+    def get_classification_levels():
+        with app.app_context():
+            return [row.classification_name for row in Classifications.query.all()]
 
 
 class RequirementTypes(db.Model):
@@ -81,10 +106,19 @@ class RequirementTypes(db.Model):
     type_name = Column(String(32), unique=True, nullable=False)
     type_description = Column(Text)
 
-    id = synonym('type_id')
+    def __init__(self, **kwargs):
+        for property, value in kwargs.items():
+            if hasattr(value, '__iter__') and not isinstance(value, str):
+                value = value[0]
+
+            setattr(self, property, value)
 
     def __repr__(self):
-        return self.type_name
+        return str(self.type_name)
+
+    def get_requirement_types():
+        with app.app_context():
+            return [row.type_name for row in RequirementTypes.query.all()]
 
 
 class Requirements(db.Model):
@@ -95,18 +129,32 @@ class Requirements(db.Model):
     requirement_name = Column(String(32), unique=True, nullable=False)
     release_version = Column(String(64))
     requirement_description = Column(Text)
-    parent_id = Column(Integer, ForeignKey('requirements.id'))
-    requirement_type = Column(Integer, ForeignKey('requirementtypes.id'))
-    classification = Column(Integer, ForeignKey('classifications.id'))
+    parent_project = Column(Integer, ForeignKey('projects.project_id'))
+    parent_requirement = Column(Integer, ForeignKey('requirements.requirement_id'))
+    requirement_type = Column(Integer, ForeignKey('requirementtypes.type_id'))
+    classification = Column(Integer, ForeignKey('classifications.classification_id'))
     created = Column(DateTime)
     last_modified = Column(DateTime)
-    last_modified_by = Column(Integer, ForeignKey('users.id'))
-    created_by = Column(Integer, ForeignKey('users.id'))
+    last_modified_by = Column(Integer, ForeignKey('users.user_id'))
+    created_by = Column(Integer, ForeignKey('users.user_id'))
 
-    id = synonym('requirement_id')
+    def __init__(self, **kwargs):
+        for property, value in kwargs.items():
+            if hasattr(value, '__iter__') and not isinstance(value, str):
+                value = value[0]
+
+            if property == 'classification':
+                value = Classifications.query.filter_by(
+                    classification_name=value).first().classification_id
+
+            setattr(self, property, value)
 
     def __repr__(self):
-        return self.requirement_name
+        return str(self.requirement_name)
+
+    def get_project_requirements(project_id):
+        with app.app_context():
+            return [row.requirement_name for row in Requirements.query.filter_by(parent_project=project_id).all()]
 
 
 class TestCaseFormats(db.Model):
@@ -117,13 +165,18 @@ class TestCaseFormats(db.Model):
     format_name = Column(String(32), unique=True, nullable=True)
     format_description = Column(Text)
 
-    id = synonym('format_id')
+    def __init__(self, **kwargs):
+        for property, value in kwargs.items():
+            if hasattr(value, '__iter__') and not isinstance(value, str):
+                value = value[0]
+
+            setattr(self, property, value)
 
     def __repr__(self):
-        return self.format_name
+        return str(self.format_name)
 
 
-class TestCaseTypes(db.model):
+class TestCaseTypes(db.Model):
 
     __tablename__ = 'testcasetypes'
 
@@ -131,10 +184,15 @@ class TestCaseTypes(db.model):
     case_type_name = Column(String(32), unique=True, nullable=False)
     case_type_description = Column(Text)
 
-    id = synonym('case_type_id')
+    def __init__(self, **kwargs):
+        for property, value in kwargs.items():
+            if hasattr(value, '__iter__') and not isinstance(value, str):
+                value = value[0]
+
+            setattr(self, property, value)
 
     def __repr__(self):
-        return self.case_type_name
+        return str(self.case_type_name)
 
 
 class TestCases(db.Model):
@@ -143,20 +201,25 @@ class TestCases(db.Model):
 
     case_id = Column(Integer, primary_key=True)
     case_name = Column(String(64), unique=True, nullable=False)
-    case_type = Column(Integer, ForeignKey('testcasetypes.id'))
-    case_format = Column(Integer, ForeignKey('testcaseformats.id'))
+    case_type = Column(Integer, ForeignKey('testcasetypes.case_type_id'))
+    case_format = Column(Integer, ForeignKey('testcaseformats.format_id'))
     case_objective = Column(Text)
     case_overview = Column(Text)
     prerequisites = Column(Text)
     created = Column(DateTime)
     last_modified = Column(DateTime)
-    last_modified_by = Column(Integer, ForeignKey('users.id'))
-    created_by = Column(Integer, ForeignKey('users.id'))
+    last_modified_by = Column(Integer, ForeignKey('users.user_id'))
+    created_by = Column(Integer, ForeignKey('users.user_id'))
 
-    id = synonym('case_id')
+    def __init__(self, **kwargs):
+        for property, value in kwargs.items():
+            if hasattr(value, '__iter__') and not isinstance(value, str):
+                value = value[0]
+
+            setattr(self, property, value)
 
     def __repr__(self):
-        return self.case_name
+        return str(self.case_name)
 
 
 class TestStepTypes(db.Model):
@@ -167,10 +230,15 @@ class TestStepTypes(db.Model):
     step_type_name = Column(String(32), unique=True, nullable=False)
     step_type_description = Column(Text)
 
-    id = synonym('step_type_id')
+    def __init__(self, **kwargs):
+        for property, value in kwargs.items():
+            if hasattr(value, '__iter__') and not isinstance(value, str):
+                value = value[0]
+
+            setattr(self, property, value)
 
     def __repr__(self):
-        return self.step_type_name
+        return str(self.step_type_name)
 
 
 class TestSteps(db.Model):
@@ -181,13 +249,18 @@ class TestSteps(db.Model):
     procedure_text = Column(Text)
     verification_text = Column(Text)
     notes = Column(Text)
-    test_case = Column(Integer, ForeignKey('testcases.id'))
+    test_case = Column(Integer, ForeignKey('testcases.case_id'))
     step_number = Column(Integer)
 
-    id = synonym('step_id')
+    def __init__(self, **kwargs):
+        for property, value in kwargs.items():
+            if hasattr(value, '__iter__') and not isinstance(value, str):
+                value = value[0]
+
+            setattr(self, property, value)
 
     def __repr__(self):
-        return self.step_id
+        return str(self.step_id)
 
 
 class Projects(db.Model):
@@ -198,12 +271,44 @@ class Projects(db.Model):
     project_name = Column(String(32), unique=True, nullable=False)
     project_description = Column(Text)
     project_welcome_message = Column(Text)
-    classification = Column(Integer, ForeignKey('classifications.id'))
+    classification = Column(Integer, ForeignKey('classifications.classification_id'))
     created = Column(DateTime)
     last_modified = Column(DateTime)
-    created_by = Column(Integer, ForeignKey('users.id'))
+    created_by = Column(Integer, ForeignKey('users.user_id'))
 
-    id = synonym('project_id')
+    def __init__(self, **kwargs):
+        for property, value in kwargs.items():
+            if hasattr(value, '__iter__') and not isinstance(value, str):
+                value = value[0]
+
+            if property == 'classification':
+                value = Classifications.query.filter_by(
+                    classification_name=value).first().classification_id
+
+            setattr(self, property, value)
 
     def __repr__(self):
-        return self.project_name
+        return str(self.project_name)
+
+
+class ReleaseVersions(db.Model):
+
+    __tablename__ = 'releaseversions'
+
+    project_id = Column(Integer, ForeignKey('projects.project_id'), primary_key=True)
+    release_version_name = Column(String(64), nullable=False, primary_key=True)
+    release_version_description = Column(Text)
+
+    def __init__(self, **kwargs):
+        for property, value in kwargs.items():
+            if hasattr(value, '__iter__') and not isinstance(value, str):
+                value = value[0]
+
+            setattr(self, property, value)
+
+    def __repr__(self):
+        return str(self.release_version_name)
+
+    def get_project_release_versions(project_id):
+        with app.app_context():
+            return [row.release_version_name for row in ReleaseVersions.query.filter_by(project_id=project_id).all()]
