@@ -20,8 +20,12 @@ def register_extensions(app):
 
 def register_blueprints(app):
     for module_name in ('base', 'home'):
-        module = import_module('app.{}.routes'.format(module_name))
-        app.register_blueprint(module.blueprint)
+        for object_type in ('requirements',
+                            'accounts',
+                            'testcases',
+                            'projects'):
+            module = import_module(f'app.{module_name}.routes.{object_type}')
+            app.register_blueprint(module.blueprint)
 
 
 def configure_database(app):

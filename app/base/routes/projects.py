@@ -1,0 +1,45 @@
+from datetime import datetime
+from flask import render_template, redirect, request, url_for
+from flask_login import current_user
+
+from app import db
+from app.base import blueprint
+from app.base.forms.projects import CreateProjectForm
+from app.base.models import Projects
+
+
+@blueprint.route('/create/project', methods=['GET', 'POST'])
+def create_project():
+    create_project_form = CreateProjectForm(request.form)
+    if 'create' in request.form:
+
+        project_name = request.form['project_name']
+
+        # Check if project exists.
+        project = Projects.query.filter_by(project_name=project_name).first()
+        if project:
+            return render_template('projects/create.html',
+                                   msg="A project with that name already \
+                                       exists.",
+                                   success=False, form=create_project_form)
+
+        # Else create the project.
+        project = Projects(created=datetime.utcnow(),
+                           last_modified=datetime.utcnow(),
+                           created_by=current_user.user_id,
+                           **request.form)
+
+        db.session.add(project)
+        db.session.commit()
+
+        return render_template('projects/create.html',
+                               msg='Project created!',
+                               success=True,
+                               form=create_project_form)
+
+    if not current_user.is_authenticated:
+        return redirect(url_for('base_blueprint.login'))
+
+    else:
+        return render_template('projects/create.html',
+                               form=create_project_form)

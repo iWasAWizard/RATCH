@@ -1,7 +1,8 @@
 #!/bin/bash
 
 function print_help {
-    echo -e "USAGE: $0 [-d delete_database] [-h help]"
+    echo -e "USAGE:\n\t$0 [-d delete_database] [-h help]"
+    exit 0
 }
 
 while getopts ':hd' ARG; do
@@ -15,7 +16,7 @@ while getopts ':hd' ARG; do
     esac
 done
 
-docker container ls -aq | grep -o "ratch_.*" | xargs docker container rm
+docker container ls -a | grep -o "ratch_.*" | xargs docker container rm
 docker network ls | grep -o "ratch_.*" | xargs docker network rm 
 
 if [[ ! -z ${PRUNE_DB} ]]; then

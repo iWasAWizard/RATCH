@@ -87,7 +87,7 @@ class Classifications(db.Model):
         for property, value in kwargs.items():
             if hasattr(value, '__iter__') and not isinstance(value, str):
                 value = value[0]
-            
+
             setattr(self, property, value)
 
     def __repr__(self):
@@ -95,7 +95,8 @@ class Classifications(db.Model):
 
     def get_classification_levels():
         with app.app_context():
-            return [row.classification_name for row in Classifications.query.all()]
+            return [row.classification_name for row in
+                    Classifications.query.all()]
 
 
 class RequirementTypes(db.Model):
@@ -130,9 +131,11 @@ class Requirements(db.Model):
     release_version = Column(String(64))
     requirement_description = Column(Text)
     parent_project = Column(Integer, ForeignKey('projects.project_id'))
-    parent_requirement = Column(Integer, ForeignKey('requirements.requirement_id'))
+    parent_requirement = Column(
+        Integer, ForeignKey('requirements.requirement_id'))
     requirement_type = Column(Integer, ForeignKey('requirementtypes.type_id'))
-    classification = Column(Integer, ForeignKey('classifications.classification_id'))
+    classification = Column(Integer, ForeignKey(
+        'classifications.classification_id'))
     created = Column(DateTime)
     last_modified = Column(DateTime)
     last_modified_by = Column(Integer, ForeignKey('users.user_id'))
@@ -154,7 +157,9 @@ class Requirements(db.Model):
 
     def get_project_requirements(project_id):
         with app.app_context():
-            return [row.requirement_name for row in Requirements.query.filter_by(parent_project=project_id).all()]
+            return [row.requirement_name for row in
+                    Requirements.query.filter_by(
+                        parent_project=project_id).all()]
 
 
 class TestCaseFormats(db.Model):
@@ -271,7 +276,8 @@ class Projects(db.Model):
     project_name = Column(String(32), unique=True, nullable=False)
     project_description = Column(Text)
     project_welcome_message = Column(Text)
-    classification = Column(Integer, ForeignKey('classifications.classification_id'))
+    classification = Column(Integer, ForeignKey(
+        'classifications.classification_id'))
     created = Column(DateTime)
     last_modified = Column(DateTime)
     created_by = Column(Integer, ForeignKey('users.user_id'))
@@ -295,7 +301,8 @@ class ReleaseVersions(db.Model):
 
     __tablename__ = 'releaseversions'
 
-    project_id = Column(Integer, ForeignKey('projects.project_id'), primary_key=True)
+    project_id = Column(Integer, ForeignKey(
+        'projects.project_id'), primary_key=True)
     release_version_name = Column(String(64), nullable=False, primary_key=True)
     release_version_description = Column(Text)
 
@@ -311,4 +318,6 @@ class ReleaseVersions(db.Model):
 
     def get_project_release_versions(project_id):
         with app.app_context():
-            return [row.release_version_name for row in ReleaseVersions.query.filter_by(project_id=project_id).all()]
+            return [row.release_version_name for row in
+                    ReleaseVersions.query.filter_by(
+                        project_id=project_id).all()]
