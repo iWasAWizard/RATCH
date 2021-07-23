@@ -4,12 +4,18 @@ Copyright (c) 2019 - present AppSeed.us
 """
 
 from flask import Flask
+from flask_restful import Api
 from flask_login import LoginManager
 from flask_sqlalchemy import SQLAlchemy
 from importlib import import_module
+import app.api.routes as api_routes
+import app.home.routes as home_routes
+import app.base.routes as base_routes
+
 # from logging import basicConfig, DEBUG, getLogger, StreamHandler
 
 db = SQLAlchemy()
+api = Api()
 login_manager = LoginManager()
 
 
@@ -19,13 +25,17 @@ def register_extensions(app):
 
 
 def register_blueprints(app):
-    for module_name in ('base', 'home'):
-        for object_type in ('requirements',
-                            'accounts',
-                            'testcases',
-                            'projects'):
-            module = import_module(f'app.{module_name}.routes.{object_type}')
-            app.register_blueprint(module.blueprint)
+    for module in home_routes.__all__:
+        bp = import_module(f'app.home.routes.{module}')
+        app.register_blueprint(bp.blueprint)
+
+    for module in base_routes.__all__:
+        bp = import_module(f'app.base.routes.{module}')
+        app.register_blueprint(bp.blueprint)
+
+    for module in api_routes.__all__:
+        bp = import_module(f'app.api.routes.{module}')
+        app.register_blueprint(bp.blueprint)
 
 
 def configure_database(app):
@@ -41,7 +51,7 @@ def configure_database(app):
 def create_app(config):
     app = Flask(__name__, static_folder='base/static')
     app.config.from_object(config)
+    configure_database(app)
     register_extensions(app)
     register_blueprints(app)
-    configure_database(app)
     return app

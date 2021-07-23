@@ -1,8 +1,3 @@
-# -*- encoding: utf-8 -*-
-"""
-Copyright (c) 2019 - present AppSeed.us
-"""
-
 from flask_login import UserMixin
 from sqlalchemy import (
     Binary,
@@ -14,25 +9,12 @@ from sqlalchemy import (
     ForeignKey
 )
 
-from app import db, login_manager, create_app
-
-from decouple import config
-from config import config_dict
-
-from app.base.util import hash_pass
-
-# WARNING: Don't run with debug turned on in production!
-DEBUG = config('Debug', default=False, cast=bool)
-
-# The configuration
-get_config_mode = 'Debug' if DEBUG else 'Production'
-
-app_config = config_dict[get_config_mode.capitalize()]
-app = create_app(app_config)
+from app import db, login_manager
+from app.base.utils import hash_pass
 
 
 class Users(db.Model, UserMixin):
-
+    """Table that stores user information, such as credentials"""
     __tablename__ = 'users'
 
     user_id = Column(Integer, primary_key=True)
@@ -47,16 +29,13 @@ class Users(db.Model, UserMixin):
     authentication_token = Column(String, unique=True, nullable=False)
 
     def __init__(self, **kwargs):
+        # Iterate over the properties of a request
         for property, value in kwargs.items():
-            # depending on whether value is an iterable or not, we must
-            # unpack it's value (when **kwargs is request.form, some values
-            # will be a 1-element list)
             if hasattr(value, '__iter__') and not isinstance(value, str):
-                # the ,= unpack of a singleton fails PEP8 (travis flake8 test)
                 value = value[0]
 
             if property == 'password':
-                value = hash_pass(value)  # we need bytes here (not plain str)
+                value = hash_pass(value)  # Password is stored in the database as a bytes object, so this gets that.
 
             setattr(self, property, value)
 
@@ -77,13 +56,13 @@ def request_loader(request):
 
 
 class Classifications(db.Model):
-
     __tablename__ = 'classifications'
 
     classification_id = Column(Integer, primary_key=True)
     classification_name = Column(String(32), unique=True, nullable=False)
 
     def __init__(self, **kwargs):
+        # Iterate over the properties of a request
         for property, value in kwargs.items():
             if hasattr(value, '__iter__') and not isinstance(value, str):
                 value = value[0]
@@ -93,14 +72,8 @@ class Classifications(db.Model):
     def __repr__(self):
         return str(self.classification_name)
 
-    def get_classification_levels():
-        with app.app_context():
-            return [row.classification_name for row in
-                    Classifications.query.all()]
-
 
 class RequirementTypes(db.Model):
-
     __tablename__ = 'requirementtypes'
 
     type_id = Column(Integer, primary_key=True)
@@ -108,6 +81,7 @@ class RequirementTypes(db.Model):
     type_description = Column(Text)
 
     def __init__(self, **kwargs):
+        # Iterate over the properties of a request
         for property, value in kwargs.items():
             if hasattr(value, '__iter__') and not isinstance(value, str):
                 value = value[0]
@@ -117,13 +91,8 @@ class RequirementTypes(db.Model):
     def __repr__(self):
         return str(self.type_name)
 
-    def get_requirement_types():
-        with app.app_context():
-            return [row.type_name for row in RequirementTypes.query.all()]
-
 
 class Requirements(db.Model):
-
     __tablename__ = 'requirements'
 
     requirement_id = Column(Integer, primary_key=True)
@@ -142,6 +111,7 @@ class Requirements(db.Model):
     created_by = Column(Integer, ForeignKey('users.user_id'))
 
     def __init__(self, **kwargs):
+        # Iterate over the properties of a request
         for property, value in kwargs.items():
             if hasattr(value, '__iter__') and not isinstance(value, str):
                 value = value[0]
@@ -155,15 +125,8 @@ class Requirements(db.Model):
     def __repr__(self):
         return str(self.requirement_name)
 
-    def get_project_requirements(project_id):
-        with app.app_context():
-            return [row.requirement_name for row in
-                    Requirements.query.filter_by(
-                        parent_project=project_id).all()]
-
 
 class TestCaseFormats(db.Model):
-
     __tablename__ = 'testcaseformats'
 
     format_id = Column(Integer, primary_key=True)
@@ -171,6 +134,7 @@ class TestCaseFormats(db.Model):
     format_description = Column(Text)
 
     def __init__(self, **kwargs):
+        # Iterate over the properties of a request
         for property, value in kwargs.items():
             if hasattr(value, '__iter__') and not isinstance(value, str):
                 value = value[0]
@@ -182,7 +146,6 @@ class TestCaseFormats(db.Model):
 
 
 class TestCaseTypes(db.Model):
-
     __tablename__ = 'testcasetypes'
 
     case_type_id = Column(Integer, primary_key=True)
@@ -190,6 +153,7 @@ class TestCaseTypes(db.Model):
     case_type_description = Column(Text)
 
     def __init__(self, **kwargs):
+        # Iterate over the properties of a request
         for property, value in kwargs.items():
             if hasattr(value, '__iter__') and not isinstance(value, str):
                 value = value[0]
@@ -201,7 +165,6 @@ class TestCaseTypes(db.Model):
 
 
 class TestCases(db.Model):
-
     __tablename__ = 'testcases'
 
     case_id = Column(Integer, primary_key=True)
@@ -217,6 +180,7 @@ class TestCases(db.Model):
     created_by = Column(Integer, ForeignKey('users.user_id'))
 
     def __init__(self, **kwargs):
+        # Iterate over the properties of a request
         for property, value in kwargs.items():
             if hasattr(value, '__iter__') and not isinstance(value, str):
                 value = value[0]
@@ -228,7 +192,6 @@ class TestCases(db.Model):
 
 
 class TestStepTypes(db.Model):
-
     __tablename__ = 'teststeptypes'
 
     step_type_id = Column(Integer, primary_key=True)
@@ -236,6 +199,7 @@ class TestStepTypes(db.Model):
     step_type_description = Column(Text)
 
     def __init__(self, **kwargs):
+        # Iterate over the properties of a request
         for property, value in kwargs.items():
             if hasattr(value, '__iter__') and not isinstance(value, str):
                 value = value[0]
@@ -247,7 +211,6 @@ class TestStepTypes(db.Model):
 
 
 class TestSteps(db.Model):
-
     __tablename__ = 'teststeps'
 
     step_id = Column(Integer, primary_key=True)
@@ -258,6 +221,7 @@ class TestSteps(db.Model):
     step_number = Column(Integer)
 
     def __init__(self, **kwargs):
+        # Iterate over the properties of a request
         for property, value in kwargs.items():
             if hasattr(value, '__iter__') and not isinstance(value, str):
                 value = value[0]
@@ -269,7 +233,6 @@ class TestSteps(db.Model):
 
 
 class Projects(db.Model):
-
     __tablename__ = 'projects'
 
     project_id = Column(Integer, primary_key=True)
@@ -283,6 +246,7 @@ class Projects(db.Model):
     created_by = Column(Integer, ForeignKey('users.user_id'))
 
     def __init__(self, **kwargs):
+        # Iterate over the properties of a request
         for property, value in kwargs.items():
             if hasattr(value, '__iter__') and not isinstance(value, str):
                 value = value[0]
@@ -298,7 +262,6 @@ class Projects(db.Model):
 
 
 class ReleaseVersions(db.Model):
-
     __tablename__ = 'releaseversions'
 
     project_id = Column(Integer, ForeignKey(
@@ -307,6 +270,7 @@ class ReleaseVersions(db.Model):
     release_version_description = Column(Text)
 
     def __init__(self, **kwargs):
+        # Iterate over the properties of a request
         for property, value in kwargs.items():
             if hasattr(value, '__iter__') and not isinstance(value, str):
                 value = value[0]
@@ -315,9 +279,3 @@ class ReleaseVersions(db.Model):
 
     def __repr__(self):
         return str(self.release_version_name)
-
-    def get_project_release_versions(project_id):
-        with app.app_context():
-            return [row.release_version_name for row in
-                    ReleaseVersions.query.filter_by(
-                        project_id=project_id).all()]

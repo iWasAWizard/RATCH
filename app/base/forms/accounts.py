@@ -3,8 +3,7 @@ from wtforms import TextField, PasswordField
 from wtforms.validators import Email, DataRequired
 
 
-# login and registration
-
+# Form that is presented to user on the login page
 class LoginForm(FlaskForm):
     username = TextField('Username', id='username_login',
                          validators=[DataRequired()])
@@ -13,6 +12,7 @@ class LoginForm(FlaskForm):
                              validators=[DataRequired()])
 
 
+# Form that is presented to user on the registration page
 class CreateAccountForm(FlaskForm):
     username = TextField('Username', id='username_create',
                          validators=[DataRequired()])

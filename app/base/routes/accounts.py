@@ -11,33 +11,33 @@ from app.base import blueprint
 from app.base.forms.accounts import LoginForm, CreateAccountForm
 from app.base.models import Users
 
-from app.base.util import verify_pass, create_api_authentication_token
-
-
-@blueprint.route('/')
-def route_default():
-    return redirect(url_for('base_blueprint.login'))
+from app.base.utils import verify_pass, create_api_authentication_token
 
 
 @blueprint.route('/login', methods=['GET', 'POST'])
 def login():
+    """Login route"""
     login_form = LoginForm(request.form)
     if 'login' in request.form:
 
-        # read form data
+        # Read form data
         username = request.form['username']
         password = request.form['password']
 
-        # Locate user
+        # Locate user in Users table
         user = Users.query.filter_by(username=username).first()
 
         # Check the password
         if user and verify_pass(password, user.password):
+            # Update the current user's lastseen time
+            user.lastseen = datetime.utcnow()
+            db.session.commit()
 
             login_user(user)
+
             return redirect(url_for('base_blueprint.route_default'))
 
-        # Something (user or pass) is not ok
+        # Either the username or password is incorrect.
         return render_template('accounts/login.html',
                                msg='Incorrect user or password.',
                                form=login_form)
@@ -45,18 +45,20 @@ def login():
     if not current_user.is_authenticated:
         return render_template('accounts/login.html',
                                form=login_form)
+
     return redirect(url_for('home_blueprint.index'))
 
 
 @blueprint.route('/register', methods=['GET', 'POST'])
 def register():
+    """Registration route"""
     create_account_form = CreateAccountForm(request.form)
     if 'register' in request.form:
 
         username = request.form['username']
         email = request.form['email']
 
-        # Check usename exists
+        # Check if username exists in Users table
         user = Users.query.filter_by(username=username).first()
         if user:
             return render_template('accounts/register.html',
@@ -64,7 +66,7 @@ def register():
                                    success=False,
                                    form=create_account_form)
 
-        # Check email exists
+        # Check if email address exists in Users table
         user = Users.query.filter_by(email=email).first()
         if user:
             return render_template('accounts/register.html',
@@ -72,7 +74,7 @@ def register():
                                    success=False,
                                    form=create_account_form)
 
-        # else we can create the user
+        # Create the new user
         user = Users(created=datetime.utcnow(),
                      lastseen=datetime.utcnow(),
                      authentication_token=create_api_authentication_token(),
@@ -93,5 +95,6 @@ def register():
 
 @blueprint.route('/logout')
 def logout():
+    """Route to log the current user out"""
     logout_user()
     return redirect(url_for('base_blueprint.login'))
