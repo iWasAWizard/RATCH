@@ -5,12 +5,14 @@ from flask_login import current_user
 from app import db
 from app.base import blueprint
 from app.base.forms.projects import CreateProjectForm
-from app.base.models import Projects
+from app.base.models import Projects, Classifications
 
 
 @blueprint.route('/create/project', methods=['GET', 'POST'])
 def create_project():
-    create_project_form = CreateProjectForm(request.form)
+    classifications = [row.classification_name for row in Classifications.query.all()]
+
+    create_project_form = CreateProjectForm(request.form, classifications)
     if 'create' in request.form:
 
         project_name = request.form['project_name']
@@ -35,7 +37,7 @@ def create_project():
         return render_template('projects/create.html',
                                msg='Project created!',
                                success=True,
-                               form=create_project_form)
+                               form=CreateProjectForm(request.form, classifications))
 
     if not current_user.is_authenticated:
         return redirect(url_for('base_blueprint.login'))

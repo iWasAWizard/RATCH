@@ -1,17 +1,16 @@
 from flask_wtf import FlaskForm
 from wtforms import TextField, TextAreaField, SelectField
 from wtforms.validators import DataRequired
-from app.base.db_utils import get_classification_levels
 
 
 class CreateProjectForm(FlaskForm):
-    classification_choices = get_classification_levels()
+    classifications = None
 
     project_name = TextField('Name', id='project_name',
                              validators=[DataRequired()])
 
     classification = SelectField(
-        'Classification', id='classification', choices=classification_choices)
+        'Classification', id='classification', choices=classifications)
 
     project_description = TextAreaField('Project Description',
                                         id='project_description')

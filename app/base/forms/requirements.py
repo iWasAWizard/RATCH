@@ -1,27 +1,26 @@
 from flask_wtf import FlaskForm
 from wtforms import TextField, TextAreaField, SelectField
 from wtforms.validators import DataRequired
-from app.base.db_utils import get_project_requirements, get_project_release_versions, get_classification_levels, get_requirement_types
 
 
 class CreateRequirementForm(FlaskForm):
     project_id = None
-    parent_choices = get_project_requirements(project_id)
-    release_versions = get_project_release_versions(project_id)
-    type_choices = get_requirement_types()
-    classification_choices = get_classification_levels()
+    release_versions = None
+    reqtypes = None
+    classifications = None
+    requirements = None
 
     requirement_type = SelectField(
-        'Requirement Type', id='requirement_type', choices=type_choices)
+        'Requirement Type', id='requirement_type', choices=reqtypes)
 
     classification = SelectField(
-        'Classification', id='classification', choices=classification_choices)
+        'Classification', id='classification', choices=classifications)
 
     parent_requirement = SelectField('Parent Requirement',
                                      id='parent_requirement',
                                      description='The parent requirement. Leave \
                                          blank to create a root requirement.',
-                                     choices=parent_choices)
+                                     choices=requirements)
 
     requirement_name = TextField('Name', id='requirement_name',
                                  validators=[DataRequired()])

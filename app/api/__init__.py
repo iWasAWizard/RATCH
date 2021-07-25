@@ -1,13 +1,12 @@
 from flask import Blueprint
+from flask_restful import Api
 
 
 blueprint = Blueprint(
     'api_blueprint',
     __name__,
-    url_prefix='',
-    template_folder='templates',
-    static_folder='static'
+    url_prefix='/api'
 )
+api = Api(blueprint)
 
-
-__all__ = ["blueprint", "routes"]
+from . import routes
