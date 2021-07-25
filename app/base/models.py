@@ -1,6 +1,6 @@
 from flask_login import UserMixin
 from sqlalchemy import (
-    Binary,
+    LargeBinary,
     Column,
     Integer,
     String,
@@ -8,13 +8,13 @@ from sqlalchemy import (
     Text,
     ForeignKey
 )
-
-from app import db, login_manager
-from app.base.utils import hash_pass
+from sqlalchemy.orm import synonym
+from app.base.database import db
+from app.base.login_manager import login_manager, hash_pass
 
 
 class Users(db.Model, UserMixin):
-    """Table that stores user information, such as credentials"""
+    """Table of user object data"""
     __tablename__ = 'users'
 
     user_id = Column(Integer, primary_key=True)
@@ -22,11 +22,13 @@ class Users(db.Model, UserMixin):
     email = Column(String(64), unique=True, nullable=False)
     first_name = Column(String(32), nullable=False)
     last_name = Column(String(32))
-    password = Column(Binary)
+    password = Column(LargeBinary)
     created = Column(DateTime)
     lastseen = Column(DateTime)
     notes = Column(Text)
     authentication_token = Column(String, unique=True, nullable=False)
+
+    id = synonym("user_id")
 
     def __init__(self, **kwargs):
         # Iterate over the properties of a request
@@ -45,7 +47,8 @@ class Users(db.Model, UserMixin):
 
 @login_manager.user_loader
 def user_loader(user_id):
-    return Users.query.filter_by(user_id=user_id).first()
+    user = Users.query.filter_by(user_id=user_id).first()
+    return user if user else None
 
 
 @login_manager.request_loader
@@ -56,10 +59,13 @@ def request_loader(request):
 
 
 class Classifications(db.Model):
+    """Table of classification levels that can be mapped to project and requirement objects"""
     __tablename__ = 'classifications'
 
     classification_id = Column(Integer, primary_key=True)
     classification_name = Column(String(32), unique=True, nullable=False)
+
+    id = synonym("classification_id")
 
     def __init__(self, **kwargs):
         # Iterate over the properties of a request
@@ -74,11 +80,14 @@ class Classifications(db.Model):
 
 
 class RequirementTypes(db.Model):
+    """Table of types that can be mapped to requirement objects"""
     __tablename__ = 'requirementtypes'
 
     type_id = Column(Integer, primary_key=True)
     type_name = Column(String(32), unique=True, nullable=False)
     type_description = Column(Text)
+
+    id = synonym("type_id")
 
     def __init__(self, **kwargs):
         # Iterate over the properties of a request
@@ -93,6 +102,7 @@ class RequirementTypes(db.Model):
 
 
 class Requirements(db.Model):
+    """Table of requirements that have been created for all projects and their data"""
     __tablename__ = 'requirements'
 
     requirement_id = Column(Integer, primary_key=True)
@@ -109,6 +119,8 @@ class Requirements(db.Model):
     last_modified = Column(DateTime)
     last_modified_by = Column(Integer, ForeignKey('users.user_id'))
     created_by = Column(Integer, ForeignKey('users.user_id'))
+
+    id = synonym("requirement_id")
 
     def __init__(self, **kwargs):
         # Iterate over the properties of a request
@@ -127,11 +139,14 @@ class Requirements(db.Model):
 
 
 class TestCaseFormats(db.Model):
+    """Table of formats that can be mapped to test cases"""
     __tablename__ = 'testcaseformats'
 
     format_id = Column(Integer, primary_key=True)
     format_name = Column(String(32), unique=True, nullable=True)
     format_description = Column(Text)
+
+    id = synonym("format_id")
 
     def __init__(self, **kwargs):
         # Iterate over the properties of a request
@@ -146,11 +161,14 @@ class TestCaseFormats(db.Model):
 
 
 class TestCaseTypes(db.Model):
+    """Table of types that can be mapped to test cases"""
     __tablename__ = 'testcasetypes'
 
     case_type_id = Column(Integer, primary_key=True)
     case_type_name = Column(String(32), unique=True, nullable=False)
     case_type_description = Column(Text)
+
+    id = synonym("case_type_id")
 
     def __init__(self, **kwargs):
         # Iterate over the properties of a request
@@ -165,6 +183,7 @@ class TestCaseTypes(db.Model):
 
 
 class TestCases(db.Model):
+    """Table of test cases that have been created for all projects"""
     __tablename__ = 'testcases'
 
     case_id = Column(Integer, primary_key=True)
@@ -179,6 +198,8 @@ class TestCases(db.Model):
     last_modified_by = Column(Integer, ForeignKey('users.user_id'))
     created_by = Column(Integer, ForeignKey('users.user_id'))
 
+    id = synonym("case_id")
+
     def __init__(self, **kwargs):
         # Iterate over the properties of a request
         for property, value in kwargs.items():
@@ -192,11 +213,14 @@ class TestCases(db.Model):
 
 
 class TestStepTypes(db.Model):
+    """Table of types that can be assigned to test cases"""
     __tablename__ = 'teststeptypes'
 
     step_type_id = Column(Integer, primary_key=True)
     step_type_name = Column(String(32), unique=True, nullable=False)
     step_type_description = Column(Text)
+
+    id = synonym("step_type_id")
 
     def __init__(self, **kwargs):
         # Iterate over the properties of a request
@@ -211,6 +235,7 @@ class TestStepTypes(db.Model):
 
 
 class TestSteps(db.Model):
+    """Table of all test steps for all test cases"""
     __tablename__ = 'teststeps'
 
     step_id = Column(Integer, primary_key=True)
@@ -219,6 +244,8 @@ class TestSteps(db.Model):
     notes = Column(Text)
     test_case = Column(Integer, ForeignKey('testcases.case_id'))
     step_number = Column(Integer)
+
+    id = synonym("step_id")
 
     def __init__(self, **kwargs):
         # Iterate over the properties of a request
@@ -233,6 +260,7 @@ class TestSteps(db.Model):
 
 
 class Projects(db.Model):
+    """Table of project data"""
     __tablename__ = 'projects'
 
     project_id = Column(Integer, primary_key=True)
@@ -244,6 +272,8 @@ class Projects(db.Model):
     created = Column(DateTime)
     last_modified = Column(DateTime)
     created_by = Column(Integer, ForeignKey('users.user_id'))
+
+    id = synonym("project_id")
 
     def __init__(self, **kwargs):
         # Iterate over the properties of a request
@@ -262,12 +292,15 @@ class Projects(db.Model):
 
 
 class ReleaseVersions(db.Model):
+    """Table of release versions that have been created for all projects"""
     __tablename__ = 'releaseversions'
 
     project_id = Column(Integer, ForeignKey(
         'projects.project_id'), primary_key=True)
     release_version_name = Column(String(64), nullable=False, primary_key=True)
     release_version_description = Column(Text)
+
+    id = synonym("project_id")
 
     def __init__(self, **kwargs):
         # Iterate over the properties of a request

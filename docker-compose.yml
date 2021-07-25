@@ -3,17 +3,17 @@ services:
   postgres:
     restart: always
     build:
-      context: ./database
+      context: postgres
       dockerfile: Docker-postgres
     environment:
-      - POSTGRES_USER=ratch_user
-      - POSTGRES_PASSWORD=ratch
-      - POSTGRES_DB=ratch_db
+      - POSTGRES_USER=${DB_USERNAME}
+      - POSTGRES_PASSWORD=${DB_PASS}
+      - POSTGRES_DB=${DB_NAME}
     volumes:
       - /etc/hosts:/etc/hosts:rw
       - db_data:/var/lib/postgresql/data:delegated
     ports:
-      - 5432:5432
+      - ${DB_PORT}:${DB_PORT}
     networks:
       - db_network
 
@@ -24,7 +24,7 @@ services:
     volumes:
       - ./app:/app
     ports:
-      - 80:5000
+      - 8000:8000
     networks:
       - db_network
       - web_network
@@ -35,7 +35,7 @@ services:
     restart: always
     image: "nginx:latest"
     ports:
-      - 85:85
+      - 80:80
     volumes:
       - ./nginx:/etc/nginx/conf.d
     networks:
@@ -43,18 +43,18 @@ services:
     depends_on: 
       - ratch-app
 
-  pgadmin:
-    image: dpage/pgadmin4:latest
-    user: 5050:5050
-    environment:
-      - PGADMIN_DEFAULT_EMAIL=user@domain.com
-      - PGADMIN_DEFAULT_PASSWORD=password
-    links:
-      - postgres
-    networks:
-      - db_network
-    ports:
-      - 8080:80
+#  pgadmin:
+#    image: dpage/pgadmin4:latest
+#    user: 5050:5050
+#    environment:
+#      - PGADMIN_DEFAULT_EMAIL=user@domain.com
+#      - PGADMIN_DEFAULT_PASSWORD=password
+#    links:
+#      - postgres
+#    networks:
+#      - db_network
+#    ports:
+#      - 8080:80
 networks:
   db_network:
     driver: bridge

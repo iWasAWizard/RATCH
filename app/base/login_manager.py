@@ -1,12 +1,10 @@
-# -*- encoding: utf-8 -*-
-"""
-Copyright (c) 2019 - present AppSeed.us
-"""
-
 import hashlib
 import binascii
 import os
 import secrets
+from flask_login import LoginManager
+
+login_manager = LoginManager()
 
 
 def hash_pass(password):

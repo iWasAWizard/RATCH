@@ -6,6 +6,6 @@ COPY run.py gunicorn-cfg.py requirements.txt requirements-pgsql.txt config.py .e
 
 RUN pip install -r requirements-pgsql.txt
 
-EXPOSE 5000
+EXPOSE 8000
 
 CMD ["gunicorn", "--config", "gunicorn-cfg.py", "run:app"]

@@ -1,21 +1,11 @@
-# -*- encoding: utf-8 -*-
-"""
-Copyright (c) 2019 - present AppSeed.us
-"""
-
 from flask import Flask
-from flask_restful import Api
-from flask_login import LoginManager
-from flask_sqlalchemy import SQLAlchemy
 from importlib import import_module
-import app.api as api_routes
+from app.base.database import db
+from app.base.login_manager import login_manager
 import app.home.routes as home_routes
 import app.base.routes as base_routes
-
-# from logging import basicConfig, DEBUG, getLogger, StreamHandler
-
-db = SQLAlchemy()
-login_manager = LoginManager()
+from app import base, home
+import app.base.api as api
 
 
 def register_extensions(app):
@@ -32,7 +22,7 @@ def register_blueprints(app):
         bp = import_module(f'app.base.routes.{module}')
         app.register_blueprint(bp.blueprint)
 
-    app.register_blueprint(api_routes.blueprint)
+    app.register_blueprint(api.blueprint)
 
 
 def configure_database(app):

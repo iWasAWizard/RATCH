@@ -6,12 +6,12 @@ from flask_login import (
     logout_user
 )
 
-from app import db
+from app.base.database import db
 from app.base import blueprint
 from app.base.forms.accounts import LoginForm, CreateAccountForm
 from app.base.models import Users
 
-from app.base.utils import verify_pass, create_api_authentication_token
+from app.base.login_manager import verify_pass, create_api_authentication_token
 
 
 @blueprint.route('/login', methods=['GET', 'POST'])
