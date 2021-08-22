@@ -5,6 +5,7 @@ from decouple import config
 from config import config_dict
 from app import create_app
 from app.base.database import db
+from app.base.database_helpers import seed_database
 
 # WARNING: Don't run with debug turned on in production!
 DEBUG = config('DEBUG', default=True, cast=bool)
@@ -30,3 +31,4 @@ if DEBUG:
 
 if __name__ == "__main__":
     app.run()
+    seed_database()

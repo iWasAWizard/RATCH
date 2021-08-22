@@ -28,7 +28,7 @@ class Users(db.Model, UserMixin):
     notes = Column(Text)
     authentication_token = Column(String, unique=True, nullable=False)
 
-    id = synonym("user_id")
+    id = synonym('user_id')
 
     def __init__(self, **kwargs):
         # Iterate over the properties of a request
@@ -65,7 +65,7 @@ class Classifications(db.Model):
     classification_id = Column(Integer, primary_key=True)
     classification_name = Column(String(32), unique=True, nullable=False)
 
-    id = synonym("classification_id")
+    id = synonym('classification_id')
 
     def __init__(self, **kwargs):
         # Iterate over the properties of a request
@@ -87,7 +87,7 @@ class RequirementTypes(db.Model):
     type_name = Column(String(32), unique=True, nullable=False)
     type_description = Column(Text)
 
-    id = synonym("type_id")
+    id = synonym('type_id')
 
     def __init__(self, **kwargs):
         # Iterate over the properties of a request
@@ -120,7 +120,7 @@ class Requirements(db.Model):
     last_modified_by = Column(Integer, ForeignKey('users.user_id'))
     created_by = Column(Integer, ForeignKey('users.user_id'))
 
-    id = synonym("requirement_id")
+    id = synonym('requirement_id')
 
     def __init__(self, **kwargs):
         # Iterate over the properties of a request
@@ -146,7 +146,7 @@ class TestCaseFormats(db.Model):
     format_name = Column(String(32), unique=True, nullable=True)
     format_description = Column(Text)
 
-    id = synonym("format_id")
+    id = synonym('format_id')
 
     def __init__(self, **kwargs):
         # Iterate over the properties of a request
@@ -168,7 +168,7 @@ class TestCaseTypes(db.Model):
     case_type_name = Column(String(32), unique=True, nullable=False)
     case_type_description = Column(Text)
 
-    id = synonym("case_type_id")
+    id = synonym('case_type_id')
 
     def __init__(self, **kwargs):
         # Iterate over the properties of a request
@@ -198,7 +198,7 @@ class TestCases(db.Model):
     last_modified_by = Column(Integer, ForeignKey('users.user_id'))
     created_by = Column(Integer, ForeignKey('users.user_id'))
 
-    id = synonym("case_id")
+    id = synonym('case_id')
 
     def __init__(self, **kwargs):
         # Iterate over the properties of a request
@@ -220,7 +220,7 @@ class TestStepTypes(db.Model):
     step_type_name = Column(String(32), unique=True, nullable=False)
     step_type_description = Column(Text)
 
-    id = synonym("step_type_id")
+    id = synonym('step_type_id')
 
     def __init__(self, **kwargs):
         # Iterate over the properties of a request
@@ -245,7 +245,7 @@ class TestSteps(db.Model):
     test_case = Column(Integer, ForeignKey('testcases.case_id'))
     step_number = Column(Integer)
 
-    id = synonym("step_id")
+    id = synonym('step_id')
 
     def __init__(self, **kwargs):
         # Iterate over the properties of a request
@@ -273,7 +273,7 @@ class Projects(db.Model):
     last_modified = Column(DateTime)
     created_by = Column(Integer, ForeignKey('users.user_id'))
 
-    id = synonym("project_id")
+    id = synonym('project_id')
 
     def __init__(self, **kwargs):
         # Iterate over the properties of a request
@@ -300,7 +300,7 @@ class ReleaseVersions(db.Model):
     release_version_name = Column(String(64), nullable=False, primary_key=True)
     release_version_description = Column(Text)
 
-    id = synonym("project_id")
+    id = synonym('project_id')
 
     def __init__(self, **kwargs):
         # Iterate over the properties of a request
@@ -312,3 +312,66 @@ class ReleaseVersions(db.Model):
 
     def __repr__(self):
         return str(self.release_version_name)
+
+
+class Permissions(db.Model):
+    __tablename__ = 'permissions'
+
+    permission_id = Column(Integer, primary_key=True)
+    permission_name = Column(String(64), nullable=False)
+    permission_description = Column(Text)
+
+    id = synonym('permission_id')
+
+    def __init__(self, **kwargs):
+        # Iterate over the properties of a request
+        for property, value in kwargs.items():
+            if hasattr(value, '__iter__') and not isinstance(value, str):
+                value = value[0]
+
+            setattr(self, property, value)
+
+    def __repr__(self):
+        return str(self.permission_name)
+
+
+class ProjectRoles(db.Model):
+    __tablename__ = 'projectroles'
+
+    project_role_id = Column(Integer, primary_key=True)
+    project_role_name = Column(String(32), nullable=False)
+    project_role_description = Column(Text)
+
+    id = synonym('project_role_id')
+
+    def __init__(self, **kwargs):
+        # Iterate over the properties of a request
+        for property, value in kwargs.items():
+            if hasattr(value, '__iter__') and not isinstance(value, str):
+                value = value[0]
+
+            setattr(self, property, value)
+
+    def __repr__(self):
+        return str(self.project_role_name)
+
+
+class GlobalRoles(db.Model):
+    __tablename__ = 'globalroles'
+
+    global_role_id = Column(Integer, primary_key=True)
+    global_role_name = Column(String(32), nullable=False)
+    global_role_description = Column(Text)
+
+    id = synonym('global_role_id')
+
+    def __init__(self, **kwargs):
+        # Iterate over the properties of a request
+        for property, value in kwargs.items():
+            if hasattr(value, '__iter__') and not isinstance(value, str):
+                value = value[0]
+
+            setattr(self, property, value)
+
+    def __repr__(self):
+        return str(self.global_role_name)

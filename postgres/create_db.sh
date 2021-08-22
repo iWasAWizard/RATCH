@@ -1,4 +1,4 @@
-
+#!/bin/bash
 
 psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-EOSQL
 
@@ -145,7 +145,7 @@ CREATE TABLE IF NOT EXISTS TestCasesByProject (
 
 CREATE TABLE IF NOT EXISTS Permissions (
   permission_id SERIAL PRIMARY KEY,
-  permission_name VARCHAR NOT NULL,
+  permission_name VARCHAR (64) NOT NULL,
   permission_description TEXT
 );
 
@@ -186,53 +186,5 @@ CREATE TABLE IF NOT EXISTS ProjectRolesByUser (
   grant_date TIMESTAMP,
   PRIMARY KEY(user_id, project_role_id)
 );
-
-INSERT INTO Classifications (classification_name)
-VALUES
-    ('Unclassified'),
-    ('Unclassified//FOUO'),
-    ('Confidential'),
-    ('Secret'),
-    ('Top Secret'),
-    ('SCI'),
-    ('Top Secret//SCI');
-
-INSERT INTO RequirementTypes (type_name, type_description)
-VALUES
-    ('Functional', 'Describes a behavior of a system or function.'),
-    ('Non-Functional', 'Describes non-functional system characteristics such as appearance.'),
-    ('Constraint', 'Describes a limitation of a system characteristic or function.'),
-    ('Performance', 'Describes a benchmark to which a characteristic of a function must be held.'),
-    ('Specification', 'Describes in exacting detail an aspect of a system.'),
-    ('Accessibility', 'Describes a function or feature related to system accessibility by users with various disabilities.');
-
-INSERT INTO TestCaseTypes (case_type_name, case_type_description)
-VALUES
-    ('User Interface', 'Validates a portion of a system UI.'),
-    ('Performance', 'Validates the functionality of a system under load conditions.'),
-    ('Functional', 'Validates a portion of system functionality.'),
-    ('Ad-hoc', 'A test which seeks to uncover bugs through system exploration.');
-
-INSERT INTO TestCaseFormats (format_name, format_description)
-VALUES
-    ('Step-driven', 'The default test case style. Discreet steps with procedure, verification and notes sections.'),
-    ('Free-text', 'Markdown-formatted text with no implicit discreet steps.');
-
-INSERT INTO TestStepTypes (step_type_name, step_type_description)
-VALUES
-    ('Procedural', 'A standard test step, with procedure, verification, and notes sections.'),
-    ('Informational', 'A note inserted by the engineer to note details or important information about upcoming steps.');
-
-INSERT INTO GlobalRoles (global_role_name, global_role_description)
-VALUES
-    ('Administrator', 'Global instance administrator, with all rights to modify any project or system setting.'),
-    ('User', 'Standard user, with the ability to be granted additional permissions on a per-project basis.');
-
-INSERT INTO ProjectRoles (project_role_name, project_role_description)
-VALUES
-    ('Project Owner', 'Allows administration and configuration of a project, as well as the ability to add and manage users.'),
-    ('Developer', 'Allows creation and modification of requirements, datasets, test cycles and test cases.'),
-    ('Auditor', 'Allows read-only access to all aspects of a project.'),
-    ('Test Automation', 'A robot user for executing test cycles.');
 
 EOSQL

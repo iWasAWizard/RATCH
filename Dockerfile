@@ -4,7 +4,7 @@ ENV FLASK_APP run.py
 
 COPY run.py gunicorn-cfg.py requirements.txt requirements-postgres.txt config.py .env ./
 
-RUN pip install -r requirements-pgsql.txt
+RUN pip install -r requirements-postgres.txt
 
 EXPOSE 8000
 
