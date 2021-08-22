@@ -2,10 +2,10 @@ from datetime import datetime
 from flask import render_template, redirect, request, url_for
 from flask_login import current_user
 
-from app.base.database import db
+from app.database import db
 from app.base import blueprint
 from app.base.forms.requirements import CreateRequirementForm
-from app.base.models import Projects, Requirements, ReleaseVersions, RequirementTypes, Classifications
+from app.database.models import Projects, Requirements, ReleaseVersions, RequirementTypes, Classifications
 
 
 @blueprint.route('/<project_id>/create/requirement/', methods=['GET', 'POST'])

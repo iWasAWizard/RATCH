@@ -1,4 +1,4 @@
-from app.base.models import (
+from app.database.models import (
     Classifications,
     RequirementTypes,
     TestCaseTypes,
@@ -7,6 +7,7 @@ from app.base.models import (
     ProjectRoles,
     GlobalRoles
 )
+from app.database import db
 
 
 def seed_database():

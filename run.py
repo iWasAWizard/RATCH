@@ -4,7 +4,7 @@ from decouple import config
 
 from config import config_dict
 from app import create_app
-from app.base.database import db
+from app.database import db
 from app.base.database_helpers import seed_database
 
 # WARNING: Don't run with debug turned on in production!

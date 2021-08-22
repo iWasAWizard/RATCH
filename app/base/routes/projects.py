@@ -2,10 +2,10 @@ from datetime import datetime
 from flask import render_template, redirect, request, url_for
 from flask_login import current_user
 
-from app.base.database import db
+from app.database import db
 from app.base import blueprint
 from app.base.forms.projects import CreateProjectForm
-from app.base.models import Projects, Classifications
+from app.database.models import Projects, Classifications
 
 
 @blueprint.route('/create/project', methods=['GET', 'POST'])

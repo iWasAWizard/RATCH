@@ -6,10 +6,10 @@ from flask_login import (
     logout_user
 )
 
-from app.base.database import db
+from app.database import db
 from app.base import blueprint
 from app.base.forms.accounts import LoginForm, CreateAccountForm
-from app.base.models import Users
+from app.database.models import Users
 
 from app.base.login_manager import verify_pass, create_api_authentication_token
 

@@ -1,3 +1,4 @@
+from flask import json
 from flask_login import UserMixin
 from sqlalchemy import (
     LargeBinary,
@@ -9,11 +10,230 @@ from sqlalchemy import (
     ForeignKey
 )
 from sqlalchemy.orm import synonym
-from app.base.database import db
+from sqlalchemy.orm.attributes import QueryableAttribute
+from app.database import db
 from app.base.login_manager import login_manager, hash_pass
 
 
-class Users(db.Model, UserMixin):
+class BaseModel(db.Model):
+    __abstract__ = True
+
+    def __init__(self, **kwargs):
+        kwargs["_force"] = True
+        self.from_dict(**kwargs)
+
+    def to_dict(self, show=None, _hide=[], _path=None):
+        """Return a dictionary representation of this model"""
+
+        show = show or []
+
+        hidden = self._hidden_fields if hasattr(self, "_hidden_fields") else []
+        default = self._default_fields if hasattr(self, "_default_fields") else []
+        default.extend(['id', 'modified_at', 'created_at'])
+
+        if not _path:
+            _path = self.__tablename__.lower()
+
+            def prepend_path(item):
+                item = item.lower()
+                if item.split(".", 1)[0] == _path:
+                    return item
+                if len(item) == 0:
+                    return item
+                if item[0] != ".":
+                    item = f'.{item}'
+                item = f'{_path}{item}'
+                return item
+
+            _hide[:] = [prepend_path(x) for x in _hide]
+            show[:] = [prepend_path(x) for x in show]
+
+        columns = self.__table__.columns.keys()
+        relationships = self.__mapper__.relationships.keys()
+        properties = dir(self)
+
+        ret_data = {}
+
+        for key in columns:
+            if key.startswith("_"):
+                continue
+            check = f'{_path}.{key}'
+            if check in _hide or key in hidden:
+                continue
+            if check in show or key in default:
+                ret_data[key] = getattr(self, key)
+
+        for key in relationships:
+            if key.startswith("_"):
+                continue
+            check = f'{_path}.{key}'
+            if check in _hide or key in hidden:
+                continue
+            if check in show or key in default:
+                _hide.append(check)
+                is_list = self.__mapper__.relationships[key].uselist
+                if is_list:
+                    items = getattr(self, key)
+                    if self.__mapper__.relationships[key].query_class is not None:
+                        if hasattr(items, "all"):
+                            items = items.all()
+                    ret_data[key] = []
+                    for item in items:
+                        ret_data[key].append(
+                            item.to_dict(
+                                show=list(show),
+                                _hide=list(_hide),
+                                _path=f'{_path}.{key.lower()}',
+                            )
+                        )
+                else:
+                    if (
+                        self.__mapper__.relationships[key].query_class is not None
+                        or self.__mapper__.relationships[key].instrument_class
+                        is not None
+                    ):
+                        item = getattr(self, key)
+                        if item is not None:
+                            ret_data[key] = item.to_dict(
+                                show=list(show),
+                                _hide=list(_hide),
+                                _path=f'{_path}.{key.lower()}',
+                            )
+                        else:
+                            ret_data[key] = None
+                    else:
+                        ret_data[key] = getattr(self, key)
+
+        for key in list(set(properties) - set(columns) - set(relationships)):
+            if key.startswith("_"):
+                continue
+            if not hasattr(self.__class__, key):
+                continue
+            attr = getattr(self.__class__, key)
+            if not (isinstance(attr, property) or isinstance(attr, QueryableAttribute)):
+                continue
+            check = f'{_path}.{key}'
+            if check in _hide or key in hidden:
+                continue
+            if check in show or key in default:
+                val = getattr(self, key)
+                if hasattr(val, "to_dict"):
+                    ret_data[key] = val.to_dict(
+                        show=list(show),
+                        _hide=list(_hide),
+                        _path=f'{_path}.{key.lower()}',
+                    )
+                else:
+                    try:
+                        ret_data[key] = json.loads(json.dumps(val))
+                    except:
+                        pass
+
+        return ret_data
+
+    def from_dict(self, **kwargs):
+        """Update this model with a dictionary"""
+
+        _force = kwargs.pop("_force", False)
+
+        readonly = self._readonly_fields if hasattr(self, "_readonly_fields") else []
+        if hasattr(self, "_hidden_fields"):
+            readonly += self._hidden_fields
+
+        readonly += ["id", "created_at", "modified_at"]
+
+        columns = self.__table__.columns.keys()
+        relationships = self.__mapper__.relationships.keys()
+        properties = dir(self)
+
+        changes = {}
+
+        for key in columns:
+            if key.startswith("_"):
+                continue
+            allowed = True if _force or key not in readonly else False
+            exists = True if key in kwargs else False
+            if allowed and exists:
+                val = getattr(self, key)
+                if val != kwargs[key]:
+                    changes[key] = {"old": val, "new": kwargs[key]}
+                    setattr(self, key, kwargs[key])
+
+        for rel in relationships:
+            if key.startswith("_"):
+                continue
+            allowed = True if _force or rel not in readonly else False
+            exists = True if rel in kwargs else False
+            if allowed and exists:
+                is_list = self.__mapper__.relationships[rel].uselist
+                if is_list:
+                    valid_ids = []
+                    query = getattr(self, rel)
+                    cls = self.__mapper__.relationships[rel].entity.class_
+                    for item in kwargs[rel]:
+                        if (
+                            "id" in item
+                            and query.filter_by(id=item["id"]).limit(1).count() == 1
+                        ):
+                            obj = cls.query.filter_by(id=item["id"]).first()
+                            col_changes = obj.from_dict(**item)
+                            if col_changes:
+                                col_changes["id"] = str(item["id"])
+                                if rel in changes:
+                                    changes[rel].append(col_changes)
+                                else:
+                                    changes.update({rel: [col_changes]})
+                            valid_ids.append(str(item["id"]))
+                        else:
+                            col = cls()
+                            col_changes = col.from_dict(**item)
+                            query.append(col)
+                            db.session.flush()
+                            if col_changes:
+                                col_changes["id"] = str(col.id)
+                                if rel in changes:
+                                    changes[rel].append(col_changes)
+                                else:
+                                    changes.update({rel: [col_changes]})
+                            valid_ids.append(str(col.id))
+
+                    # delete rows from relationship that were not in kwargs[rel]
+                    for item in query.filter(not(cls.id.in_(valid_ids))).all():
+                        col_changes = {"id": str(item.id), "deleted": True}
+                        if rel in changes:
+                            changes[rel].append(col_changes)
+                        else:
+                            changes.update({rel: [col_changes]})
+                        db.session.delete(item)
+
+                else:
+                    val = getattr(self, rel)
+                    if self.__mapper__.relationships[rel].query_class is not None:
+                        if val is not None:
+                            col_changes = val.from_dict(**kwargs[rel])
+                            if col_changes:
+                                changes.update({rel: col_changes})
+                    else:
+                        if val != kwargs[rel]:
+                            setattr(self, rel, kwargs[rel])
+                            changes[rel] = {"old": val, "new": kwargs[rel]}
+
+        for key in list(set(properties) - set(columns) - set(relationships)):
+            if key.startswith("_"):
+                continue
+            allowed = True if _force or key not in readonly else False
+            exists = True if key in kwargs else False
+            if allowed and exists and getattr(self.__class__, key).fset is not None:
+                val = getattr(self, key)
+                if hasattr(val, "to_dict"):
+                    val = val.to_dict()
+                changes[key] = {"old": val, "new": kwargs[key]}
+                setattr(self, key, kwargs[key])
+
+        return changes
+
+
+class Users(BaseModel, UserMixin):
     """Table of user object data"""
     __tablename__ = 'users'
 
@@ -30,14 +250,33 @@ class Users(db.Model, UserMixin):
 
     id = synonym('user_id')
 
+    _default_fields = [
+        "user_id",
+        "username",
+        "email",
+        "first_name",
+        "last_name",
+    ]
+    _hidden_fields = [
+        "password",
+        "notes",
+        "authentication_token",
+    ]
+    _readonly_fields = [
+        "created",
+        "lastseen",
+    ]
+
     def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         # Iterate over the properties of a request
         for property, value in kwargs.items():
             if hasattr(value, '__iter__') and not isinstance(value, str):
                 value = value[0]
 
             if property == 'password':
-                value = hash_pass(value)  # Password is stored in the database as a bytes object, so this gets that.
+                # Password is stored in the database as a bytes object, so this gets that.
+                value = hash_pass(value)
 
             setattr(self, property, value)
 
@@ -58,7 +297,7 @@ def request_loader(request):
     return user if user else None
 
 
-class Classifications(db.Model):
+class Classifications(BaseModel):
     """Table of classification levels that can be mapped to project and requirement objects"""
     __tablename__ = 'classifications'
 
@@ -79,7 +318,7 @@ class Classifications(db.Model):
         return str(self.classification_name)
 
 
-class RequirementTypes(db.Model):
+class RequirementTypes(BaseModel):
     """Table of types that can be mapped to requirement objects"""
     __tablename__ = 'requirementtypes'
 
@@ -90,6 +329,7 @@ class RequirementTypes(db.Model):
     id = synonym('type_id')
 
     def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         # Iterate over the properties of a request
         for property, value in kwargs.items():
             if hasattr(value, '__iter__') and not isinstance(value, str):
@@ -101,7 +341,7 @@ class RequirementTypes(db.Model):
         return str(self.type_name)
 
 
-class Requirements(db.Model):
+class Requirements(BaseModel):
     """Table of requirements that have been created for all projects and their data"""
     __tablename__ = 'requirements'
 
@@ -122,7 +362,26 @@ class Requirements(db.Model):
 
     id = synonym('requirement_id')
 
+    _default_fields = [
+        "requirement_id",
+        "requirement_name",
+        "release_version",
+        "requirement_description",
+        "parent_project",
+        "parent_requirement",
+        "requirement_type",
+        "classification",
+    ]
+    _hidden_fields = []
+    _readonly_fields = [
+        "created",
+        "last_modified",
+        "last_modified_by",
+        "created_by",
+    ]
+
     def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         # Iterate over the properties of a request
         for property, value in kwargs.items():
             if hasattr(value, '__iter__') and not isinstance(value, str):
@@ -138,7 +397,7 @@ class Requirements(db.Model):
         return str(self.requirement_name)
 
 
-class TestCaseFormats(db.Model):
+class TestCaseFormats(BaseModel):
     """Table of formats that can be mapped to test cases"""
     __tablename__ = 'testcaseformats'
 
@@ -149,6 +408,7 @@ class TestCaseFormats(db.Model):
     id = synonym('format_id')
 
     def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         # Iterate over the properties of a request
         for property, value in kwargs.items():
             if hasattr(value, '__iter__') and not isinstance(value, str):
@@ -160,7 +420,7 @@ class TestCaseFormats(db.Model):
         return str(self.format_name)
 
 
-class TestCaseTypes(db.Model):
+class TestCaseTypes(BaseModel):
     """Table of types that can be mapped to test cases"""
     __tablename__ = 'testcasetypes'
 
@@ -171,6 +431,7 @@ class TestCaseTypes(db.Model):
     id = synonym('case_type_id')
 
     def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         # Iterate over the properties of a request
         for property, value in kwargs.items():
             if hasattr(value, '__iter__') and not isinstance(value, str):
@@ -182,7 +443,7 @@ class TestCaseTypes(db.Model):
         return str(self.case_type_name)
 
 
-class TestCases(db.Model):
+class TestCases(BaseModel):
     """Table of test cases that have been created for all projects"""
     __tablename__ = 'testcases'
 
@@ -200,7 +461,25 @@ class TestCases(db.Model):
 
     id = synonym('case_id')
 
+    _default_fields = [
+        "case_id",
+        "case_name",
+        "case_type",
+        "case_format",
+        "case_objective",
+        "case_overview",
+        "prerequisites",
+    ]
+    _hidden_fields = []
+    _readonly_fields = [
+        "created",
+        "last_modified",
+        "last_modified_by",
+        "created_by",
+    ]
+
     def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         # Iterate over the properties of a request
         for property, value in kwargs.items():
             if hasattr(value, '__iter__') and not isinstance(value, str):
@@ -212,7 +491,7 @@ class TestCases(db.Model):
         return str(self.case_name)
 
 
-class TestStepTypes(db.Model):
+class TestStepTypes(BaseModel):
     """Table of types that can be assigned to test cases"""
     __tablename__ = 'teststeptypes'
 
@@ -234,7 +513,7 @@ class TestStepTypes(db.Model):
         return str(self.step_type_name)
 
 
-class TestSteps(db.Model):
+class TestSteps(BaseModel):
     """Table of all test steps for all test cases"""
     __tablename__ = 'teststeps'
 
@@ -247,7 +526,21 @@ class TestSteps(db.Model):
 
     id = synonym('step_id')
 
+    _default_fields = [
+        "step_id",
+        "procedure_text",
+        "verification_text",
+        "test_case",
+        "step_number",
+        "parent_requirement",
+        "requirement_type",
+        "classification",
+    ]
+    _hidden_fields = []
+    _readonly_fields = []
+
     def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         # Iterate over the properties of a request
         for property, value in kwargs.items():
             if hasattr(value, '__iter__') and not isinstance(value, str):
@@ -259,7 +552,7 @@ class TestSteps(db.Model):
         return str(self.step_id)
 
 
-class Projects(db.Model):
+class Projects(BaseModel):
     """Table of project data"""
     __tablename__ = 'projects'
 
@@ -276,6 +569,7 @@ class Projects(db.Model):
     id = synonym('project_id')
 
     def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         # Iterate over the properties of a request
         for property, value in kwargs.items():
             if hasattr(value, '__iter__') and not isinstance(value, str):
@@ -291,7 +585,7 @@ class Projects(db.Model):
         return str(self.project_name)
 
 
-class ReleaseVersions(db.Model):
+class ReleaseVersions(BaseModel):
     """Table of release versions that have been created for all projects"""
     __tablename__ = 'releaseversions'
 
@@ -303,6 +597,7 @@ class ReleaseVersions(db.Model):
     id = synonym('project_id')
 
     def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         # Iterate over the properties of a request
         for property, value in kwargs.items():
             if hasattr(value, '__iter__') and not isinstance(value, str):
@@ -314,7 +609,7 @@ class ReleaseVersions(db.Model):
         return str(self.release_version_name)
 
 
-class Permissions(db.Model):
+class Permissions(BaseModel):
     __tablename__ = 'permissions'
 
     permission_id = Column(Integer, primary_key=True)
@@ -324,6 +619,7 @@ class Permissions(db.Model):
     id = synonym('permission_id')
 
     def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         # Iterate over the properties of a request
         for property, value in kwargs.items():
             if hasattr(value, '__iter__') and not isinstance(value, str):
@@ -335,7 +631,7 @@ class Permissions(db.Model):
         return str(self.permission_name)
 
 
-class ProjectRoles(db.Model):
+class ProjectRoles(BaseModel):
     __tablename__ = 'projectroles'
 
     project_role_id = Column(Integer, primary_key=True)
@@ -345,6 +641,7 @@ class ProjectRoles(db.Model):
     id = synonym('project_role_id')
 
     def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         # Iterate over the properties of a request
         for property, value in kwargs.items():
             if hasattr(value, '__iter__') and not isinstance(value, str):
@@ -356,7 +653,7 @@ class ProjectRoles(db.Model):
         return str(self.project_role_name)
 
 
-class GlobalRoles(db.Model):
+class GlobalRoles(BaseModel):
     __tablename__ = 'globalroles'
 
     global_role_id = Column(Integer, primary_key=True)
@@ -366,6 +663,7 @@ class GlobalRoles(db.Model):
     id = synonym('global_role_id')
 
     def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         # Iterate over the properties of a request
         for property, value in kwargs.items():
             if hasattr(value, '__iter__') and not isinstance(value, str):

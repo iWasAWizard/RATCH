@@ -8,4 +8,4 @@ blueprint = Blueprint(
     static_folder='static'
 )
 
-__all__ = ["blueprint", "models", "forms", "routes"]
+__all__ = ['blueprint', 'forms', 'routes']
