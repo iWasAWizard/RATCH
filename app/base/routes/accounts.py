@@ -29,8 +29,8 @@ def login():
 
         # Check the password
         if user and verify_pass(password, user.password):
-            # Update the current user's lastseen time
-            user.lastseen = datetime.utcnow()
+            # Update the current user's last_seen time
+            user.last_seen = datetime.utcnow()
             db.session.commit()
 
             login_user(user)
@@ -76,7 +76,7 @@ def register():
 
         # Create the new user
         user = Users(created=datetime.utcnow(),
-                     lastseen=datetime.utcnow(),
+                     last_seen=datetime.utcnow(),
                      authentication_token=create_api_authentication_token(),
                      **request.form)
         db.session.add(user)

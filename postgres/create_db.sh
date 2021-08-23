@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS Users (
   username VARCHAR (32) UNIQUE NOT NULL,
   password BYTEA NOT NULL,
   created TIMESTAMP,
-  lastseen TIMESTAMP,
+  last_seen TIMESTAMP,
   authentication_token CHAR (32) UNIQUE NOT NULL,
   notes TEXT
 );

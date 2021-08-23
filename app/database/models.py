@@ -19,7 +19,7 @@ class BaseModel(db.Model):
     __abstract__ = True
 
     def __init__(self, **kwargs):
-        kwargs["_force"] = True
+        kwargs['_force'] = True
         self.from_dict(**kwargs)
 
     def to_dict(self, show=None, _hide=[], _path=None):
@@ -27,8 +27,8 @@ class BaseModel(db.Model):
 
         show = show or []
 
-        hidden = self._hidden_fields if hasattr(self, "_hidden_fields") else []
-        default = self._default_fields if hasattr(self, "_default_fields") else []
+        hidden = self._hidden_fields if hasattr(self, '_hidden_fields') else []
+        default = self._default_fields if hasattr(self, '_default_fields') else []
         default.extend(['id', 'modified_at', 'created_at'])
 
         if not _path:
@@ -36,11 +36,11 @@ class BaseModel(db.Model):
 
             def prepend_path(item):
                 item = item.lower()
-                if item.split(".", 1)[0] == _path:
+                if item.split('.', 1)[0] == _path:
                     return item
                 if len(item) == 0:
                     return item
-                if item[0] != ".":
+                if item[0] != '.':
                     item = f'.{item}'
                 item = f'{_path}{item}'
                 return item
@@ -55,7 +55,7 @@ class BaseModel(db.Model):
         ret_data = {}
 
         for key in columns:
-            if key.startswith("_"):
+            if key.startswith('_'):
                 continue
             check = f'{_path}.{key}'
             if check in _hide or key in hidden:
@@ -64,7 +64,7 @@ class BaseModel(db.Model):
                 ret_data[key] = getattr(self, key)
 
         for key in relationships:
-            if key.startswith("_"):
+            if key.startswith('_'):
                 continue
             check = f'{_path}.{key}'
             if check in _hide or key in hidden:
@@ -75,7 +75,7 @@ class BaseModel(db.Model):
                 if is_list:
                     items = getattr(self, key)
                     if self.__mapper__.relationships[key].query_class is not None:
-                        if hasattr(items, "all"):
+                        if hasattr(items, 'all'):
                             items = items.all()
                     ret_data[key] = []
                     for item in items:
@@ -105,7 +105,7 @@ class BaseModel(db.Model):
                         ret_data[key] = getattr(self, key)
 
         for key in list(set(properties) - set(columns) - set(relationships)):
-            if key.startswith("_"):
+            if key.startswith('_'):
                 continue
             if not hasattr(self.__class__, key):
                 continue
@@ -117,7 +117,7 @@ class BaseModel(db.Model):
                 continue
             if check in show or key in default:
                 val = getattr(self, key)
-                if hasattr(val, "to_dict"):
+                if hasattr(val, 'to_dict'):
                     ret_data[key] = val.to_dict(
                         show=list(show),
                         _hide=list(_hide),
@@ -134,13 +134,13 @@ class BaseModel(db.Model):
     def from_dict(self, **kwargs):
         """Update this model with a dictionary"""
 
-        _force = kwargs.pop("_force", False)
+        _force = kwargs.pop('_force', False)
 
-        readonly = self._readonly_fields if hasattr(self, "_readonly_fields") else []
-        if hasattr(self, "_hidden_fields"):
+        readonly = self._readonly_fields if hasattr(self, '_readonly_fields') else []
+        if hasattr(self, '_hidden_fields'):
             readonly += self._hidden_fields
 
-        readonly += ["id", "created_at", "modified_at"]
+        readonly += ['id', 'created_at', 'modified_at']
 
         columns = self.__table__.columns.keys()
         relationships = self.__mapper__.relationships.keys()
@@ -149,18 +149,18 @@ class BaseModel(db.Model):
         changes = {}
 
         for key in columns:
-            if key.startswith("_"):
+            if key.startswith('_'):
                 continue
             allowed = True if _force or key not in readonly else False
             exists = True if key in kwargs else False
             if allowed and exists:
                 val = getattr(self, key)
                 if val != kwargs[key]:
-                    changes[key] = {"old": val, "new": kwargs[key]}
+                    changes[key] = {'old': val, 'new': kwargs[key]}
                     setattr(self, key, kwargs[key])
 
         for rel in relationships:
-            if key.startswith("_"):
+            if key.startswith('_'):
                 continue
             allowed = True if _force or rel not in readonly else False
             exists = True if rel in kwargs else False
@@ -172,25 +172,25 @@ class BaseModel(db.Model):
                     cls = self.__mapper__.relationships[rel].entity.class_
                     for item in kwargs[rel]:
                         if (
-                            "id" in item
-                            and query.filter_by(id=item["id"]).limit(1).count() == 1
+                            'id' in item
+                            and query.filter_by(id=item['id']).limit(1).count() == 1
                         ):
-                            obj = cls.query.filter_by(id=item["id"]).first()
+                            obj = cls.query.filter_by(id=item['id']).first()
                             col_changes = obj.from_dict(**item)
                             if col_changes:
-                                col_changes["id"] = str(item["id"])
+                                col_changes['id'] = str(item['id'])
                                 if rel in changes:
                                     changes[rel].append(col_changes)
                                 else:
                                     changes.update({rel: [col_changes]})
-                            valid_ids.append(str(item["id"]))
+                            valid_ids.append(str(item['id']))
                         else:
                             col = cls()
                             col_changes = col.from_dict(**item)
                             query.append(col)
                             db.session.flush()
                             if col_changes:
-                                col_changes["id"] = str(col.id)
+                                col_changes['id'] = str(col.id)
                                 if rel in changes:
                                     changes[rel].append(col_changes)
                                 else:
@@ -199,7 +199,7 @@ class BaseModel(db.Model):
 
                     # delete rows from relationship that were not in kwargs[rel]
                     for item in query.filter(not(cls.id.in_(valid_ids))).all():
-                        col_changes = {"id": str(item.id), "deleted": True}
+                        col_changes = {'id': str(item.id), 'deleted': True}
                         if rel in changes:
                             changes[rel].append(col_changes)
                         else:
@@ -216,18 +216,18 @@ class BaseModel(db.Model):
                     else:
                         if val != kwargs[rel]:
                             setattr(self, rel, kwargs[rel])
-                            changes[rel] = {"old": val, "new": kwargs[rel]}
+                            changes[rel] = {'old': val, 'new': kwargs[rel]}
 
         for key in list(set(properties) - set(columns) - set(relationships)):
-            if key.startswith("_"):
+            if key.startswith('_'):
                 continue
             allowed = True if _force or key not in readonly else False
             exists = True if key in kwargs else False
             if allowed and exists and getattr(self.__class__, key).fset is not None:
                 val = getattr(self, key)
-                if hasattr(val, "to_dict"):
+                if hasattr(val, 'to_dict'):
                     val = val.to_dict()
-                changes[key] = {"old": val, "new": kwargs[key]}
+                changes[key] = {'old': val, 'new': kwargs[key]}
                 setattr(self, key, kwargs[key])
 
         return changes
@@ -244,27 +244,27 @@ class Users(BaseModel, UserMixin):
     last_name = Column(String(32))
     password = Column(LargeBinary)
     created = Column(DateTime)
-    lastseen = Column(DateTime)
+    last_seen = Column(DateTime)
     notes = Column(Text)
     authentication_token = Column(String, unique=True, nullable=False)
 
     id = synonym('user_id')
 
     _default_fields = [
-        "user_id",
-        "username",
-        "email",
-        "first_name",
-        "last_name",
+        'user_id',
+        'username',
+        'email',
+        'first_name',
+        'last_name',
     ]
     _hidden_fields = [
-        "password",
-        "notes",
-        "authentication_token",
+        'password',
+        'notes',
+        'authentication_token',
     ]
     _readonly_fields = [
-        "created",
-        "lastseen",
+        'created',
+        'last_seen',
     ]
 
     def __init__(self, **kwargs):
@@ -363,21 +363,21 @@ class Requirements(BaseModel):
     id = synonym('requirement_id')
 
     _default_fields = [
-        "requirement_id",
-        "requirement_name",
-        "release_version",
-        "requirement_description",
-        "parent_project",
-        "parent_requirement",
-        "requirement_type",
-        "classification",
+        'requirement_id',
+        'requirement_name',
+        'release_version',
+        'requirement_description',
+        'parent_project',
+        'parent_requirement',
+        'requirement_type',
+        'classification',
     ]
     _hidden_fields = []
     _readonly_fields = [
-        "created",
-        "last_modified",
-        "last_modified_by",
-        "created_by",
+        'created',
+        'last_modified',
+        'last_modified_by',
+        'created_by',
     ]
 
     def __init__(self, **kwargs):
@@ -462,20 +462,20 @@ class TestCases(BaseModel):
     id = synonym('case_id')
 
     _default_fields = [
-        "case_id",
-        "case_name",
-        "case_type",
-        "case_format",
-        "case_objective",
-        "case_overview",
-        "prerequisites",
+        'case_id',
+        'case_name',
+        'case_type',
+        'case_format',
+        'case_objective',
+        'case_overview',
+        'prerequisites',
     ]
     _hidden_fields = []
     _readonly_fields = [
-        "created",
-        "last_modified",
-        "last_modified_by",
-        "created_by",
+        'created',
+        'last_modified',
+        'last_modified_by',
+        'created_by',
     ]
 
     def __init__(self, **kwargs):
@@ -527,14 +527,14 @@ class TestSteps(BaseModel):
     id = synonym('step_id')
 
     _default_fields = [
-        "step_id",
-        "procedure_text",
-        "verification_text",
-        "test_case",
-        "step_number",
-        "parent_requirement",
-        "requirement_type",
-        "classification",
+        'step_id',
+        'procedure_text',
+        'verification_text',
+        'test_case',
+        'step_number',
+        'parent_requirement',
+        'requirement_type',
+        'classification',
     ]
     _hidden_fields = []
     _readonly_fields = []

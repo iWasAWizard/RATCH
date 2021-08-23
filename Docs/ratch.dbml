@@ -12,7 +12,7 @@ Table Users as U {
   username varchar
   password varchar
   created timestamp [default: `now()`]
-  lastseen timestamp [default: `now()`]
+  last_seen timestamp [default: `now()`]
 }
 
 Table Classifications {
